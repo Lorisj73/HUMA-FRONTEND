@@ -5,9 +5,5 @@ import { fileURLToPath, URL } from 'url'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  resolve: {
-    alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-    },
-  },
+  base: '/HUMA-FRONTEND/', // ← remplace par le nom exact de TON repo
 })
