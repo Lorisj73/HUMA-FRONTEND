@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-export default function Onboarding() {
+export default function Onboarding({ onNavigate }) {
   const [step, setStep] = useState(1)
   const totalSteps = 3
 
@@ -13,7 +13,7 @@ export default function Onboarding() {
   }
 
   const handleComplete = () => {
-    alert('Bienvenue chez HUMA ! Ton onboarding est terminé.')
+    if (onNavigate) onNavigate('Accueil')
   }
 
   return (

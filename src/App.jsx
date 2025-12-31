@@ -30,7 +30,7 @@ export default function App() {
       {page === 'Accueil' && <Home theme={theme} />}
       {page === 'Moi' && <Me />}
       {page === 'Nous' && <Nous />}
-      {page === 'Onboarding' && <Onboarding />}
+      {page === 'Onboarding' && <Onboarding onNavigate={setPage} />}
       {page !== 'Accueil' && page !== 'Moi' && page !== 'Nous' && page !== 'Onboarding' && (
         <div className="container" style={{paddingTop:24}}>
           <div className="card"><div className="subtle">Cette section est en préparation.</div></div>
