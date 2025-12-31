@@ -3,6 +3,7 @@ import Navbar from './components/Navbar'
 import Home from './pages/Home'
 import Me from './pages/Me'
 import Nous from './pages/Nous'
+import Onboarding from './pages/employe/Onboarding'
 
 export default function App() {
   const getInitial = () => {
@@ -29,7 +30,8 @@ export default function App() {
       {page === 'Accueil' && <Home theme={theme} />}
       {page === 'Moi' && <Me />}
       {page === 'Nous' && <Nous />}
-      {page !== 'Accueil' && page !== 'Moi' && page !== 'Nous' && (
+      {page === 'Onboarding' && <Onboarding />}
+      {page !== 'Accueil' && page !== 'Moi' && page !== 'Nous' && page !== 'Onboarding' && (
         <div className="container" style={{paddingTop:24}}>
           <div className="card"><div className="subtle">Cette section est en préparation.</div></div>
         </div>
