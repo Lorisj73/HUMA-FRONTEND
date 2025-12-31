@@ -7,7 +7,7 @@ export default function Navbar({ theme, onToggleTheme, current='Accueil', onNavi
         <div style={{display:'flex', alignItems:'center', gap:16}}>
           <div className="brand">HUMA</div>
           <div className="tabs">
-            {['Accueil','Moi','Nous','Profil'].map(tab => (
+            {['Accueil','Moi','Nous','Onboarding','Profil'].map(tab => (
               <button key={tab} className={"tab" + (current===tab?' active':'')} onClick={()=>onNavigate?.(tab)}>{tab}</button>
             ))}
           </div>
