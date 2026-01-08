@@ -9,24 +9,24 @@ export default function Home() {
   return (
     <div>
       <div className="container">
-        <h2 style={{margin:'4px 0 8px'}}>Bonjour, Petit Poucet!</h2>
-        <div style={{color:'var(--muted)', fontSize:14}}>12 personnes ont répondu aujourd’hui</div>
+        <h2 style={{ margin: '4px 0 8px' }}>Bonjour, Petit Poucet!</h2>
+        <div style={{ color: 'var(--muted)', fontSize: 14 }}>12 personnes ont répondu aujourd’hui</div>
         <div className="progress">
-          <div className="bar" style={{width:'36%'}}></div>
+          <div className="bar" style={{ width: '36%' }}></div>
           <div className="dot"></div>
         </div>
 
-        <div className="grid two" style={{marginTop:12}}>
+        <div className="grid two" style={{ marginTop: 12 }}>
           {/* Left: Ton humeur du jour */}
           <div className="card large">
             <div className="subtle">Ton humeur du jour</div>
             <div className="card panel">
-              <div className="empty-illustration"/>
+              <div className="empty-illustration" />
               <h3>Tu n’as pas encore fait ton check‑in</h3>
               <p className="muted">Partage ton humeur du jour pour débloquer ton conseil personnalisé et contribuer au bien‑être collectif</p>
               <div className="mini muted">Anonyme et confidentiel</div>
-              <div style={{marginTop:12}}>
-                <button className="btn primary" onClick={()=>setOpen(true)}>Faire mon check‑in</button>
+              <div style={{ marginTop: 12 }}>
+                <button className="btn primary" onClick={() => setOpen(true)}>Faire mon check‑in</button>
               </div>
             </div>
           </div>
@@ -50,7 +50,7 @@ export default function Home() {
         </div>
 
         {/* Bottom cards row */}
-        <div className="grid two" style={{marginTop:12}}>
+        <div className="grid two" style={{ marginTop: 12 }}>
           <div className="card large">
             <div className="subtle">L’humeur globale aujourd’hui</div>
             <div className="card panel lock">
@@ -63,12 +63,12 @@ export default function Home() {
             <div className="card panel lock">
               <div className="lock-icon">🔒</div>
               <p className="muted">Plus que 2 check‑ins pour débloquer le baromètre complet !</p>
-              <button className="btn primary" onClick={()=>setOpen(true)}>Faire mon check‑in</button>
+              <button className="btn primary" onClick={() => setOpen(true)}>Faire mon check‑in</button>
             </div>
           </div>
         </div>
       </div>
-      <CheckinModal open={open} onClose={()=>setOpen(false)} onDone={()=>{}} />
+      <CheckinModal open={open} onClose={() => setOpen(false)} onDone={() => { }} />
     </div>
   )
 }
