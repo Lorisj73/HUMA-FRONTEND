@@ -6,4 +6,9 @@ import { fileURLToPath, URL } from 'url'
 export default defineConfig({
   plugins: [react()],
   base: '/HUMA-FRONTEND/', // ← remplace par le nom exact de TON repo
+  resolve: {
+    alias: {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
+  }
 })
