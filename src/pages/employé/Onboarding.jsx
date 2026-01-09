@@ -105,24 +105,24 @@ export default function OnboardingEmployee({ onDone }) {
   return (
     <>
       {(step === 0 || step === 3 || step === 4 || step === 5 || step === 6) && <OnboardingBackground />}
-      <div style={{maxWidth:960, margin:'0 auto', padding:'80px 24px 120px'}}>
+      <div style={{maxWidth:960, margin:'0 auto', padding:'40px 24px 40px'}}>
         {step === 0 && (
           <div style={{
             background: 'rgba(255, 255, 255, 0.4)',
             backdropFilter: 'blur(10px)',
             borderRadius: 16,
-            padding: '80px 60px',
+            padding: '40px 40px',
             maxWidth: 635,
             margin: '0 auto',
             textAlign: 'center'
           }}>
-            <img 
-              src={logoWelcome} 
-              alt="Logo Huma" 
-              style={{width:180, height:180, margin:'0 auto 32px', display:'block'}}
+            <img
+              src={logoWelcome}
+              alt="Logo Huma"
+              style={{width:140, height:140, margin:'0 auto 20px', display:'block'}}
             />
-            <h1 style={{fontSize:'clamp(32px,6vw,54px)',lineHeight:1.1,margin:'0 0 16px', color: '#1E1E1E'}}>Bienvenue sur Huma</h1>
-            <div style={{fontSize:18, maxWidth:640, margin:'0 auto 48px', lineHeight:1.5, color: '#303030'}}>Ton espace personnel qui prend le pouls de ton bien-être au travail</div>
+            <h1 style={{fontSize:'clamp(28px,5vw,44px)',lineHeight:1.1,margin:'0 0 12px', color: '#1E1E1E'}}>Bienvenue sur Huma</h1>
+            <div style={{fontSize:16, maxWidth:640, margin:'0 auto 32px', lineHeight:1.5, color: '#303030'}}>Ton espace personnel qui prend le pouls de ton bien-être au travail</div>
             <button 
               className="btn primary" 
               onClick={next}
@@ -214,13 +214,13 @@ export default function OnboardingEmployee({ onDone }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 'calc(100vh - 200px)'
+            minHeight: 'calc(100vh - 120px)'
           }}>
             <div style={{
               background: 'rgba(255, 255, 255, 0.4)',
               backdropFilter: 'blur(10px)',
               borderRadius: 16,
-              padding: '60px 50px',
+              padding: '40px 40px',
               maxWidth: 579,
               width: '100%',
               textAlign: 'center'
@@ -379,13 +379,13 @@ export default function OnboardingEmployee({ onDone }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 'calc(100vh - 200px)'
+            minHeight: 'calc(100vh - 120px)'
           }}>
             <div style={{
               background: 'rgba(255, 255, 255, 0.4)',
               backdropFilter: 'blur(10px)',
               borderRadius: 16,
-              padding: '60px 50px',
+              padding: '32px 40px',
               maxWidth: 579,
               width: '100%'
             }}>
@@ -551,13 +551,13 @@ export default function OnboardingEmployee({ onDone }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 'calc(100vh - 200px)'
+            minHeight: 'calc(100vh - 120px)'
           }}>
             <div style={{
               background: 'rgba(255, 255, 255, 0.4)',
               backdropFilter: 'blur(10px)',
               borderRadius: 16,
-              padding: '60px 50px',
+              padding: '32px 40px',
               maxWidth: 800,
               width: '100%'
             }}>
@@ -781,13 +781,13 @@ export default function OnboardingEmployee({ onDone }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 'calc(100vh - 200px)'
+            minHeight: 'calc(100vh - 120px)'
           }}>
             <div style={{
               background: 'rgba(255, 255, 255, 0.4)',
               backdropFilter: 'blur(10px)',
               borderRadius: 16,
-              padding: '60px 50px',
+              padding: '32px 40px',
               maxWidth: 800,
               width: '100%'
             }}>
@@ -978,13 +978,13 @@ export default function OnboardingEmployee({ onDone }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 'calc(100vh - 200px)'
+            minHeight: 'calc(100vh - 120px)'
           }}>
             <div style={{
               background: 'rgba(255, 255, 255, 0.4)',
               backdropFilter: 'blur(10px)',
               borderRadius: 16,
-              padding: '60px 50px',
+              padding: '32px 40px',
               maxWidth: 800,
               width: '100%'
             }}>
@@ -1174,13 +1174,13 @@ export default function OnboardingEmployee({ onDone }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minHeight: 'calc(100vh - 200px)'
+            minHeight: 'calc(100vh - 120px)'
           }}>
             <div style={{
               background: 'rgba(255, 255, 255, 0.4)',
               backdropFilter: 'blur(10px)',
               borderRadius: 16,
-              padding: '60px 50px',
+              padding: '32px 40px',
               maxWidth: 800,
               width: '100%'
             }}>
@@ -1375,31 +1375,31 @@ export default function OnboardingEmployee({ onDone }) {
               background: 'rgba(255, 255, 255, 0.4)',
               backdropFilter: 'blur(24px)',
               borderRadius: 16,
-              padding: '64px 48px',
+              padding: '40px 40px',
               boxShadow: '0px 8px 32px rgba(7, 72, 234, 0.12)',
               textAlign: 'center'
             }}>
               <div style={{
-                fontSize: 32,
+                fontSize: 28,
                 fontWeight: 600,
                 color: '#1E1E1E',
-                marginBottom: 48,
+                marginBottom: 32,
                 lineHeight: 1.4
               }}>
                 Félicitations, ton compte est activé !
               </div>
 
               {/* Logo Huma */}
-              <div style={{ marginBottom: 48 }}>
-                <img 
-                  src={logoWelcome} 
-                  alt="Huma" 
-                  style={{ 
-                    width: 120, 
-                    height: 120, 
-                    margin: '0 auto', 
-                    display: 'block' 
-                  }} 
+              <div style={{ marginBottom: 32 }}>
+                <img
+                  src={logoWelcome}
+                  alt="Huma"
+                  style={{
+                    width: 100,
+                    height: 100,
+                    margin: '0 auto',
+                    display: 'block'
+                  }}
                 />
               </div>
 
