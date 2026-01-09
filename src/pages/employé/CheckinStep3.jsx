@@ -75,10 +75,10 @@ export default function CheckinStep3({ onNavigate, onBack }) {
         backgroundColor: 'white',
         width: 680,
         borderRadius: 20,
-        padding: '50px 70px',
+        padding: '32px 48px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 28,
+        gap: 20,
         position: 'relative',
         maxHeight: '95vh',
         overflow: 'auto'
@@ -171,14 +171,14 @@ export default function CheckinStep3({ onNavigate, onBack }) {
         <div style={{
           display: 'flex',
           justifyContent: 'center',
-          marginTop: 10
+          marginTop: 8
         }}>
-          <img 
-            src={weatherImage} 
+          <img
+            src={weatherImage}
             alt="Météo du jour"
             style={{
-              width: 180,
-              height: 172
+              width: 140,
+              height: 134
             }}
           />
         </div>

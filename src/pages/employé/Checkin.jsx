@@ -41,10 +41,10 @@ export default function Checkin({ onNavigate }) {
         width: '680px',
         background: 'white',
         borderRadius: 8,
-        padding: '50px 70px',
+        padding: '32px 48px',
         display: 'flex',
         flexDirection: 'column',
-        gap: 28,
+        gap: 20,
         boxShadow: '0px 4px 8px rgba(0,0,0,0.1)',
         maxHeight: '95vh',
         overflow: 'auto',
@@ -117,14 +117,14 @@ export default function Checkin({ onNavigate }) {
         <div style={{
           display: 'flex',
           justifyContent: 'center',
-          margin: '16px 0'
+          margin: '12px 0'
         }}>
-          <img 
-            src={getMoodImage(moodValue)} 
-            alt="Météo de l'humeur" 
+          <img
+            src={getMoodImage(moodValue)}
+            alt="Météo de l'humeur"
             style={{
-              width: '180px',
-              height: '172px',
+              width: '140px',
+              height: '134px',
               objectFit: 'contain'
             }}
           />

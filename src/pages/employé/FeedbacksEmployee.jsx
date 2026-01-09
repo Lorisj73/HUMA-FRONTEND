@@ -1,257 +1,283 @@
 import { useState } from 'react'
+import Modal from '@/components/Modal'
 
-export default function FeedbacksEmployee() {
+export default function FeedbacksEmployee({ onNavigate, onCategorySelect }) {
   const [showModal, setShowModal] = useState(false)
 
-  const feedbacks = [
-    {
-      category: 'Locaux/Matériel',
-      date: '15 Nov 2025',
-      status: 'En cours',
-      preview: 'Le bureau serait plus agréable avec des plantes...'
+  // Données des catégories avec leurs compteurs
+  const categories = [
+    { 
+      name: 'Charge / Rythme', 
+      count: 9,
+      gradient: 'linear-gradient(135deg, rgba(147, 197, 253, 0.3) 0%, rgba(219, 234, 254, 0.3) 100%)'
     },
-    {
-      category: 'Équilibre vie pro/perso',
-      date: '12 Nov 2025',
-      status: 'Résolu',
-      preview: 'Les réunions tardives impactent mon équilibre...'
+    { 
+      name: 'Relations / Ambiance', 
+      count: 7,
+      gradient: 'linear-gradient(135deg, rgba(196, 181, 253, 0.3) 0%, rgba(221, 214, 254, 0.3) 100%)'
     },
-    {
-      category: 'Reconnaissance',
-      date: '8 Nov 2025',
-      status: 'En cours',
-      preview: 'J\'aimerais plus de retours sur mon travail...'
+    { 
+      name: 'Organisation / Clarté', 
+      count: 5,
+      gradient: 'linear-gradient(135deg, rgba(209, 213, 219, 0.3) 0%, rgba(229, 231, 235, 0.3) 100%)'
     },
-    {
-      category: 'Relations/Ambiance',
-      date: '5 Nov 2025',
-      status: 'Vu',
-      preview: 'L\'équipe pourrait organiser plus d\'activités...'
+    { 
+      name: 'Reconnaissance', 
+      count: 4,
+      gradient: 'linear-gradient(135deg, rgba(254, 215, 170, 0.4) 0%, rgba(254, 240, 221, 0.3) 100%)'
     },
-    {
-      category: 'Charge/Rythme',
-      date: '2 Nov 2025',
-      status: 'En cours',
-      preview: 'La charge de travail cette semaine était intense...'
+    { 
+      name: 'Équilibre vie pro / perso', 
+      count: 12,
+      gradient: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(254, 215, 170, 0.3) 100%)'
     },
-    {
-      category: 'Organisation/Clarté',
-      date: '28 Oct 2025',
-      status: 'Résolu',
-      preview: 'Les objectifs du projet manquent de clarté...'
+    { 
+      name: 'Locaux / Matériel', 
+      count: 4,
+      gradient: 'linear-gradient(135deg, rgba(254, 215, 170, 0.3) 0%, rgba(254, 226, 196, 0.3) 100%)'
     }
   ]
 
   return (
-    <div className="container" style={{paddingTop:24}}>
-      {/* Header */}
-      <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:32}}>
-        <div>
-          <h1 style={{fontSize:32, margin:'0 0 8px', fontWeight:600}}>La boîte à feedbacks</h1>
-          <p style={{fontSize:16, color:'var(--muted)', margin:0, maxWidth:800}}>
-            Participe à l'évolution collective et contribue aux améliorations qui façonnent notre culture.
-          </p>
-        </div>
-        <button 
-          className="btn primary"
-          onClick={() => setShowModal(true)}
-          style={{
-            padding:'12px 24px',
-            fontSize:15,
-            whiteSpace:'nowrap'
-          }}
-        >
-          + Nouveau feedback
-        </button>
-      </div>
-
-      {/* Illustration de la boîte (simplifié) */}
-      <div style={{
-        maxWidth:600,
-        margin:'0 auto 48px',
-        textAlign:'center'
-      }}>
-        <div style={{
-          width:'100%',
-          height:280,
-          background:'var(--panel)',
-          border:'1px solid var(--border)',
-          borderRadius:12,
-          display:'flex',
-          flexDirection:'column',
-          alignItems:'center',
-          justifyContent:'flex-end',
-          padding:'32px',
-          position:'relative',
-          overflow:'hidden'
+    <div style={{ 
+      minHeight: '100vh',
+      background: 'linear-gradient(180deg, rgba(191, 219, 254, 0.4) 0%, rgba(254, 215, 170, 0.4) 100%)',
+      padding: '32px 0'
+    }}>
+      <div className="container" style={{ maxWidth: 1200 }}>
+        {/* Header */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'flex-start', 
+          marginBottom: 40 
         }}>
-          {/* Cartes empilées */}
-          <div style={{position:'relative', width:'80%', height:200}}>
-            {['Organisation/Clarté', 'Charge/Rythme', 'Relations/Ambiance', 'Reconnaissance', 'Équilibre vie pro/perso', 'Locaux/Matériel'].map((label, i) => (
-              <div
-                key={i}
-                style={{
-                  position:'absolute',
-                  bottom: i * 35,
-                  left:'50%',
-                  transform:`translateX(-50%) rotate(${(i - 2.5) * 2}deg)`,
-                  width:'100%',
-                  background:'var(--bg)',
-                  border:'1px solid var(--border)',
-                  borderRadius:8,
-                  padding:'16px',
-                  fontSize:14,
-                  boxShadow:'0 2px 4px rgba(0,0,0,0.05)',
-                  zIndex: 6 - i
-                }}
-              >
-                {label}
-              </div>
-            ))}
+          <div>
+            <h1 style={{ 
+              fontSize: 42, 
+              margin: '0 0 12px', 
+              fontWeight: 700,
+              color: '#1E1E1E'
+            }}>
+              La boîte à feedback
+            </h1>
+            <p style={{ 
+              fontSize: 16, 
+              color: '#4B5563', 
+              margin: 0, 
+              maxWidth: 600,
+              lineHeight: 1.5
+            }}>
+              Participe à l'évolution collective et contribue aux améliorations qui façonnent notre culture.
+            </p>
           </div>
+          <button 
+            className="btn primary"
+            onClick={() => setShowModal(true)}
+            style={{
+              padding: '14px 28px',
+              fontSize: 15,
+              fontWeight: 600,
+              whiteSpace: 'nowrap',
+              background: '#2563EB',
+              borderRadius: 8,
+              border: 'none',
+              color: 'white',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.2)'
+            }}
+          >
+            + Nouveau Feedback
+          </button>
         </div>
-      </div>
 
-      {/* Liste des feedbacks */}
-      <div style={{maxWidth:900, margin:'0 auto'}}>
-        <h2 style={{fontSize:22, margin:'0 0 24px', fontWeight:600}}>Mes feedbacks</h2>
-        
-        <div style={{display:'flex', flexDirection:'column', gap:16}}>
-          {feedbacks.map((feedback, i) => (
-            <div 
-              key={i}
+        {/* Grille des catégories */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gap: 24
+        }}>
+          {categories.map((category, index) => (
+            <div
+              key={index}
               className="card"
               style={{
-                padding:'24px',
-                cursor:'pointer',
-                transition:'all .2s',
-                ':hover': {transform:'translateY(-2px)'}
+                background: category.gradient,
+                padding: 24,
+                borderRadius: 16,
+                border: '1px solid rgba(255, 255, 255, 0.5)',
+                backdropFilter: 'blur(10px)',
+                cursor: 'pointer',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                minHeight: 220
+              }}
+              onClick={() => {
+                if (onCategorySelect) onCategorySelect(category)
+                if (onNavigate) onNavigate('CategoryDetail')
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)'
+                e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)'
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)'
+                e.currentTarget.style.boxShadow = 'none'
               }}
             >
-              <div style={{display:'flex', alignItems:'center', gap:20}}>
-                {/* Icône catégorie */}
-                <div style={{
-                  width:48,
-                  height:48,
-                  borderRadius:8,
-                  border:'1px solid var(--border)',
-                  display:'flex',
-                  alignItems:'center',
-                  justifyContent:'center',
-                  flexShrink:0,
-                  fontSize:20
+              {/* En-tête de la carte */}
+              <div style={{ 
+                display: 'flex', 
+                justifyContent: 'space-between', 
+                alignItems: 'center',
+                marginBottom: 20
+              }}>
+                <h3 style={{ 
+                  fontSize: 18, 
+                  fontWeight: 600, 
+                  margin: 0,
+                  color: '#1E1E1E'
                 }}>
-                  {i % 3 === 0 ? '🏢' : i % 3 === 1 ? '⚖️' : '💬'}
-                </div>
-
-                {/* Contenu */}
-                <div style={{flex:1, minWidth:0}}>
-                  <div style={{display:'flex', alignItems:'center', gap:12, marginBottom:6}}>
-                    <h3 style={{fontSize:16, margin:0, fontWeight:600}}>{feedback.category}</h3>
-                    <span style={{
-                      fontSize:12,
-                      padding:'4px 12px',
-                      borderRadius:12,
-                      background: feedback.status === 'Résolu' ? '#e6f4ea' : feedback.status === 'En cours' ? '#fff3e0' : 'var(--panel)',
-                      color: feedback.status === 'Résolu' ? '#1e7e34' : feedback.status === 'En cours' ? '#e65100' : 'var(--muted)'
-                    }}>
-                      {feedback.status}
-                    </span>
-                  </div>
-                  <p style={{
-                    fontSize:14,
-                    color:'var(--muted)',
-                    margin:'0 0 8px',
-                    overflow:'hidden',
-                    textOverflow:'ellipsis',
-                    whiteSpace:'nowrap'
-                  }}>
-                    {feedback.preview}
-                  </p>
-                  <div style={{fontSize:13, color:'var(--muted)'}}>
-                    {feedback.date}
-                  </div>
-                </div>
-
-                {/* Flèche */}
+                  {category.name}
+                </h3>
                 <div style={{
-                  fontSize:18,
-                  color:'var(--muted)',
-                  flexShrink:0
+                  width: 40,
+                  height: 40,
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.9)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  color: '#1E1E1E',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
                 }}>
-                  →
+                  {category.count}
                 </div>
+              </div>
+
+              {/* Carte de proposition */}
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                padding: 16,
+                borderRadius: 12,
+                border: '1px solid rgba(0,0,0,0.05)'
+              }}>
+                <div style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: '#6B7280',
+                  marginBottom: 8,
+                  textTransform: 'uppercase',
+                  letterSpacing: 0.5
+                }}>
+                  Proposition
+                </div>
+                <p style={{
+                  fontSize: 13,
+                  color: '#1E1E1E',
+                  margin: 0,
+                  lineHeight: 1.6,
+                  fontStyle: 'italic'
+                }}>
+                  " Je propose qu'on ajoute des plantes et de meilleures lampes dans l'open space, c'est un peu triste."
+                </p>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Modal simple pour nouveau feedback */}
+      {/* Modal pour nouveau feedback */}
       {showModal && (
-        <div style={{
-          position:'fixed',
-          top:0,
-          left:0,
-          right:0,
-          bottom:0,
-          background:'rgba(0,0,0,0.5)',
-          display:'flex',
-          alignItems:'center',
-          justifyContent:'center',
-          zIndex:1000
-        }} onClick={() => setShowModal(false)}>
-          <div className="card" style={{
-            maxWidth:600,
-            width:'90%',
-            padding:'32px',
-            maxHeight:'90vh',
-            overflow:'auto'
-          }} onClick={e => e.stopPropagation()}>
-            <h2 style={{fontSize:24, margin:'0 0 24px', fontWeight:600}}>Nouveau feedback</h2>
-            
-            <div style={{marginBottom:20}}>
-              <label style={{display:'block', fontSize:14, marginBottom:8, fontWeight:500, color:'var(--text)'}}>Catégorie</label>
-              <select className="card" style={{
+        <Modal open={showModal} onClose={() => setShowModal(false)}>
+          <h2 style={{fontSize:28, margin:'0 0 12px', fontWeight:700}}>Nouveau feedback</h2>
+          <p style={{fontSize:14, color:'#6B7280', margin:'0 0 32px'}}>
+            Partage tes idées, suggestions ou préoccupations
+          </p>
+          
+          <form onSubmit={(e) => {
+            e.preventDefault()
+            setShowModal(false)
+          }}>
+            <label style={{display:'block', marginBottom:24}}>
+              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'#1E1E1E'}}>Catégorie</div>
+              <select style={{
                 width:'100%',
-                padding:'12px',
-                fontSize:14,
-                border:'1px solid var(--border)',
+                padding:'14px',
+                fontSize:15,
+                border:'1px solid #D1D5DB',
                 borderRadius:8,
-                background:'var(--bg)',
-                color:'var(--text)'
+                background:'white',
+                cursor:'pointer',
+                outline:'none'
               }}>
-                <option>Locaux/Matériel</option>
-                <option>Équilibre vie pro/perso</option>
+                <option>Charge / Rythme</option>
+                <option>Relations / Ambiance</option>
+                <option>Organisation / Clarté</option>
                 <option>Reconnaissance</option>
-                <option>Relations/Ambiance</option>
-                <option>Charge/Rythme</option>
-                <option>Organisation/Clarté</option>
+                <option>Équilibre vie pro / perso</option>
+                <option>Locaux / Matériel</option>
               </select>
-            </div>
+            </label>
 
-            <div style={{marginBottom:24}}>
-              <label style={{display:'block', fontSize:14, marginBottom:8, fontWeight:500, color:'var(--text)'}}>Ton message</label>
-              <textarea className="card" style={{
-                width:'100%',
-                minHeight:150,
-                padding:'12px',
-                fontSize:14,
-                border:'1px solid var(--border)',
-                borderRadius:8,
-                background:'var(--bg)',
-                color:'var(--text)',
-                resize:'vertical',
-                fontFamily:'inherit'
-              }} placeholder="Partage ton feedback de manière constructive..."/>
-            </div>
+            <label style={{display:'block', marginBottom:32}}>
+              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'#1E1E1E'}}>Ton feedback</div>
+              <textarea 
+                style={{
+                  width:'100%',
+                  padding:'14px',
+                  fontSize:15,
+                  border:'1px solid #D1D5DB',
+                  borderRadius:8,
+                  background:'white',
+                  resize:'vertical',
+                  minHeight:140,
+                  outline:'none',
+                  fontFamily:'inherit'
+                }}
+                placeholder="Décris ce qui va bien ou ce qui pourrait être amélioré..."
+              />
+            </label>
 
             <div style={{display:'flex', gap:12, justifyContent:'flex-end'}}>
-              <button className="btn" onClick={() => setShowModal(false)}>Annuler</button>
-              <button className="btn primary" onClick={() => setShowModal(false)}>Envoyer</button>
+              <button 
+                type="button" 
+                className="btn"
+                onClick={() => setShowModal(false)}
+                style={{
+                  padding:'12px 24px',
+                  fontSize:15,
+                  fontWeight:600,
+                  borderRadius:8,
+                  border:'1px solid #D1D5DB',
+                  background:'white',
+                  color:'#374151',
+                  cursor:'pointer'
+                }}
+              >
+                Annuler
+              </button>
+              <button 
+                type="submit" 
+                className="btn primary"
+                style={{
+                  padding:'12px 24px',
+                  fontSize:15,
+                  fontWeight:600,
+                  borderRadius:8,
+                  border:'none',
+                  background:'#2563EB',
+                  color:'white',
+                  cursor:'pointer',
+                  boxShadow:'0 2px 8px rgba(37, 99, 235, 0.2)'
+                }}
+              >
+                Envoyer
+              </button>
             </div>
-          </div>
-        </div>
+          </form>
+        </Modal>
       )}
     </div>
   )

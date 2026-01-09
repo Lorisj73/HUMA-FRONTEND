@@ -4,6 +4,7 @@ import Pluvieux from '@/media/logo_meteo/Pluvieux.png'
 import Nuageux from '@/media/logo_meteo/Nuageux.png'
 import SoleilNuageux from '@/media/logo_meteo/Soleil_nuageux.png'
 import Soleil from '@/media/logo_meteo/Soleil.png'
+import TeamScoreCard from '@/components/TeamScoreCard'
 
 export default function HomeEmployeeUnlocked({ onNavigate }) {
   const [lastCheckin, setLastCheckin] = useState(null)
@@ -54,22 +55,22 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
   const completedDays = checkinHistory.length
 
   return (
-    <div>
-      <div className="container" style={{paddingTop:16, maxWidth: isMobile ? '100%' : 1400, margin: '0 auto'}}>
+    <div style={{ paddingBottom: '12px' }}>
+      <div className="container" style={{maxWidth: isMobile ? '100%' : 1200}}>
         
         {/* Avatar et message de bienvenue */}
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: 16,
-          marginBottom: 24
+          marginBottom: 12
         }}>
           {/* Avatar avec personnage dans coin bas gauche */}
           <div style={{
             flexShrink: 0,
             filter: 'drop-shadow(0px 2px 1px rgba(12, 12, 13, 0.05))'
           }}>
-            <svg width="100" height="100" viewBox="0 0 146 147" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg width="70" height="70" viewBox="0 0 146 147" fill="none" xmlns="http://www.w3.org/2000/svg">
               <g filter="url(#filter0_dd_avatar_locked)">
                 <g clipPath="url(#clip0_avatar_locked)">
                   <path d="M3 70C3 31.3401 34.3401 0 73 0C111.66 0 143 31.3401 143 70C143 108.66 111.66 140 73 140C34.3401 140 3 108.66 3 70Z" fill="white"/>
@@ -116,167 +117,78 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
           <div className="card" style={{
             flex: 1,
             minWidth: 0,
-            padding:'16px 24px',
+            padding:'12px 20px',
             borderRadius:50,
             display:'flex',
             flexDirection:'column',
             justifyContent:'center',
             filter: 'drop-shadow(0px 2px 1px rgba(12, 12, 13, 0.05))'
           }}>
-            <h1 style={{fontSize:22, margin:'0 0 4px', fontWeight:600}}>Bonjour, John</h1>
-            <div style={{fontSize:14, color:'var(--muted)'}}>Merci d'avoir partagé ton humeur aujourd'hui ✨</div>
+            <h1 style={{fontSize:20, margin:'0 0 4px', fontWeight:600}}>Bonjour, John</h1>
+            <div style={{fontSize:13, color:'var(--muted)'}}>Merci d'avoir partagé ton humeur aujourd'hui ✨</div>
           </div>
         </div>
 
         {/* Grille principale - 2 colonnes */}
-        <div style={{ 
-          display: 'grid', 
+        <div style={{
+          display: 'grid',
           gridTemplateColumns: isMobile ? '1fr' : '1.734fr 1fr',
-          gap: '24px'
+          gap: '12px'
         }}>
           {/* Colonne gauche */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
             {/* Score de l'équipe */}
-            <div className="card" style={{ padding: '32px', aspectRatio: '673 / 222' }}>
-              <div style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                marginBottom: '24px'
-              }}>
-                <div>
-                  <h2 style={{ 
-                    fontSize: '20px', 
-                    fontWeight: '700',
-                    color: '#0f172a',
-                    marginBottom: '4px'
-                  }}>
-                    Le score de l'équipe aujourd'hui
-                  </h2>
-                  <p style={{ 
-                    fontSize: '14px', 
-                    color: '#94a3b8',
-                    margin: 0
-                  }}>
-                    Tout va bien aujourd'hui
-                  </p>
-                </div>
-                <div style={{ fontSize: '40px' }}>☀️</div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '40px', alignItems: 'center' }}>
-                {/* Jauge en demi-cercle */}
-                <div style={{ position: 'relative', width: '140px', height: '140px' }}>
-                  <svg width="140" height="140" style={{ transform: 'rotate(-180deg)' }}>
-                    <circle 
-                      cx="70" 
-                      cy="70" 
-                      r="60" 
-                      fill="none" 
-                      stroke="#e2e8f0" 
-                      strokeWidth="12"
-                      strokeDasharray={`${2 * Math.PI * 60 * 0.5} ${2 * Math.PI * 60}`}
-                      strokeLinecap="round"
-                    />
-                    <circle 
-                      cx="70" 
-                      cy="70" 
-                      r="60" 
-                      fill="none" 
-                      stroke="#667eea" 
-                      strokeWidth="12"
-                      strokeDasharray={`${2 * Math.PI * 60 * 0.5 * 0.72} ${2 * Math.PI * 60}`}
-                      strokeLinecap="round"
-                    />
-                  </svg>
-                  <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    textAlign: 'center'
-                  }}>
-                    <div style={{ fontSize: '32px', fontWeight: '700', color: '#0f172a' }}>7,2</div>
-                    <div style={{ fontSize: '14px', color: '#94a3b8' }}>/10</div>
-                  </div>
-                </div>
-
-                {/* Barres de progression */}
-                <div style={{ flex: 1 }}>
-                  {[
-                    { label: 'Épanoui', value: 85 },
-                    { label: 'Serein', value: 75 },
-                    { label: 'Mitigé', value: 45 }
-                  ].map((item, i) => (
-                    <div key={i} style={{ marginBottom: i < 2 ? '16px' : 0 }}>
-                      <div style={{ 
-                        fontSize: '14px', 
-                        color: '#64748b',
-                        marginBottom: '6px',
-                        fontWeight: '500'
-                      }}>
-                        {item.label}
-                      </div>
-                      <div style={{
-                        width: '100%',
-                        height: '8px',
-                        background: '#e2e8f0',
-                        borderRadius: '4px',
-                        overflow: 'hidden'
-                      }}>
-                        <div style={{
-                          width: `${item.value}%`,
-                          height: '100%',
-                          background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
-                          borderRadius: '4px'
-                        }}/>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <TeamScoreCard
+              score={7.2}
+              maxScore={10}
+              weatherValue={85}
+              categories={[
+                { label: 'Épanoui', value: 85 },
+                { label: 'Serein', value: 75 },
+                { label: 'Mitigé', value: 45 }
+              ]}
+            />
 
             {/* Evolution sur la semaine */}
-            <div className="card" style={{ padding: '32px', aspectRatio: '673 / 373' }}>
+            <div className="card" style={{ padding: '20px' }}>
               <h2 style={{ 
-                fontSize: '20px', 
+                fontSize: '18px', 
                 fontWeight: '700',
                 color: '#0f172a',
-                marginBottom: '4px'
+                marginBottom: '2px'
               }}>
                 Evolution sur la semaine
               </h2>
               <p style={{ 
-                fontSize: '14px', 
+                fontSize: '13px', 
                 color: '#94a3b8',
-                marginBottom: '24px'
+                marginBottom: '16px'
               }}>
                 Les humeurs quotidiennes de ton équipe cette semaine
               </p>
 
               {/* Graphique */}
-              <div style={{ position: 'relative', width: '100%', height: '240px' }}>
-                <svg viewBox="0 0 610 240" width="100%" height="240" preserveAspectRatio="xMidYMid meet">
+              <div style={{ position: 'relative', width: '100%', height: '160px', paddingBottom: '16px' }}>
+                <svg viewBox="0 0 610 180" width="100%" height="160" preserveAspectRatio="xMidYMid meet">
                   {/* Fond gris */}
-                  <rect width="610" height="240" fill="#F7F6F4"/>
+                  <rect width="610" height="180" fill="#F7F6F4"/>
                   
                   {/* Grille horizontale */}
-                  <rect x="0" y="20" width="610" height="40" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
-                  <rect x="0" y="60" width="610" height="40" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
-                  <rect x="0" y="100" width="610" height="40" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
-                  <rect x="0" y="140" width="610" height="40" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
-                  <rect x="0" y="180" width="610" height="40" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
+                  <rect x="0" y="15" width="610" height="30" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
+                  <rect x="0" y="45" width="610" height="30" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
+                  <rect x="0" y="75" width="610" height="30" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
+                  <rect x="0" y="105" width="610" height="30" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
+                  <rect x="0" y="135" width="610" height="30" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
                   
                   {/* Zone sous la courbe avec gradient */}
                   <path 
-                    d="M0,20 C80,33 120,45 164,49 C227,54 247,119 313,127 C374,135 404,78 466,78 L466,220 L0,220 Z" 
+                    d="M0,15 C80,25 120,34 164,37 C227,41 247,89 313,95 C374,101 404,59 466,59 L466,165 L0,165 Z" 
                     fill="url(#evolutionGradient)"
                   />
                   
                   {/* Courbe bleue */}
                   <path 
-                    d="M0,20 C80,33 120,45 164,49 C227,54 247,119 313,127 C374,135 404,78 466,78" 
+                    d="M0,15 C80,25 120,34 164,37 C227,41 247,89 313,95 C374,101 404,59 466,59" 
                     fill="none" 
                     stroke="#0748EA" 
                     strokeWidth="2"
@@ -285,16 +197,16 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
                   {/* Ligne pointillée continuant la courbe */}
                   <line 
                     x1="466" 
-                    y1="78" 
+                    y1="59" 
                     x2="610" 
-                    y2="78" 
+                    y2="59" 
                     stroke="#303030" 
                     strokeWidth="2" 
                     strokeDasharray="4 4"
                   />
                   
                   {/* Point noir à la fin */}
-                  <circle cx="466" cy="78" r="4.5" fill="#1E1E1E"/>
+                  <circle cx="466" cy="59" r="4.5" fill="#1E1E1E"/>
                   
                   <defs>
                     <linearGradient id="evolutionGradient" x1="0%" y1="100%" x2="0%" y2="0%">
@@ -307,18 +219,18 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
                 {/* Label "Sous tension" avec flèche */}
                 <div style={{
                   position: 'absolute',
-                  top: '45px',
+                  top: '34px',
                   left: '40%',
                   background: 'white',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
+                  padding: '6px 10px',
+                  borderRadius: '6px',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  fontSize: '13px',
+                  fontSize: '12px',
                   border: '1px solid #D9D9D9',
                   zIndex: 10
                 }}>
-                  <div style={{ fontWeight: '600', color: '#1E1E1E', marginBottom: '2px' }}>Sous tension</div>
-                  <div style={{ color: '#757575', fontSize: '11px' }}>Charge/Rythme</div>
+                  <div style={{ fontWeight: '600', color: '#1E1E1E', marginBottom: '1px' }}>Sous tension</div>
+                  <div style={{ color: '#757575', fontSize: '10px' }}>Charge/Rythme</div>
                   {/* Petite flèche vers le bas */}
                   <div style={{
                     position: 'absolute',
@@ -336,10 +248,10 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
                 {/* Jours de la semaine */}
                 <div style={{ 
                   position: 'absolute',
-                  bottom: '-25px',
+                  bottom: '0',
                   left: 0,
                   right: 0,
-                  fontSize: '13px',
+                  fontSize: '12px',
                   color: '#757575',
                   fontWeight: '400'
                 }}>
@@ -358,31 +270,30 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
           </div>
 
           {/* Colonne droite */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', minWidth: 0 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
             {/* Ton humeur du jour */}
             <div className="card" style={{
-              padding: '32px',
-              aspectRatio: '388 / 333',
+              padding: '20px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
               <h2 style={{ 
-                fontSize: '20px', 
+                fontSize: '18px', 
                 fontWeight: '700',
                 color: '#0f172a',
-                marginBottom: '32px',
+                marginBottom: '16px',
                 alignSelf: 'flex-start'
               }}>
                 Ton humeur du jour
               </h2>
 
               {/* Cercles concentriques */}
-              <div style={{ position: 'relative', marginBottom: '24px' }}>
+              <div style={{ position: 'relative', marginBottom: '12px' }}>
                 <div style={{
-                  width: '200px',
-                  height: '200px',
+                  width: '120px',
+                  height: '120px',
                   borderRadius: '50%',
                   background: 'rgba(199, 210, 254, 0.3)',
                   display: 'flex',
@@ -390,8 +301,8 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
                   justifyContent: 'center'
                 }}>
                   <div style={{
-                    width: '140px',
-                    height: '140px',
+                    width: '85px',
+                    height: '85px',
                     borderRadius: '50%',
                     background: 'rgba(199, 210, 254, 0.5)',
                     display: 'flex',
@@ -399,15 +310,15 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
                     justifyContent: 'center'
                   }}>
                     <div style={{
-                      width: '80px',
-                      height: '80px',
+                      width: '50px',
+                      height: '50px',
                       borderRadius: '50%',
                       background: 'white',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                      fontSize: '36px'
+                      fontSize: '24px'
                     }}>
                       ⭐
                     </div>
@@ -416,7 +327,7 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
               </div>
 
               <p style={{ 
-                fontSize: '14px', 
+                fontSize: '13px', 
                 color: '#94a3b8',
                 margin: 0
               }}>
@@ -426,18 +337,17 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
 
             {/* Ta série de check-ins */}
             <div className="card" style={{
-              padding: '32px',
-              aspectRatio: '388 / 262',
+              padding: '20px',
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
               justifyContent: 'center'
             }}>
               <h2 style={{ 
-                fontSize: '20px', 
+                fontSize: '18px', 
                 fontWeight: '700',
                 color: '#0f172a',
-                marginBottom: '32px',
+                marginBottom: '16px',
                 alignSelf: 'flex-start'
               }}>
                 Ta série de check-ins
@@ -446,27 +356,27 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
               {/* Jours de la semaine avec checks */}
               <div style={{ 
                 display: 'flex', 
-                gap: '24px',
-                marginBottom: '32px'
+                gap: '16px',
+                marginBottom: '16px'
               }}>
                 {weekDays.map((day, i) => (
                   <div key={i} style={{ textAlign: 'center' }}>
                     <div style={{
-                      width: '48px',
-                      height: '48px',
+                      width: '40px',
+                      height: '40px',
                       borderRadius: '50%',
                       background: i < completedDays ? '#667eea' : '#e2e8f0',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      marginBottom: '8px',
+                      marginBottom: '6px',
                       color: 'white',
-                      fontSize: '20px'
+                      fontSize: '16px'
                     }}>
                       {i < completedDays ? '✓' : ''}
                     </div>
                     <div style={{ 
-                      fontSize: '14px', 
+                      fontSize: '13px', 
                       color: '#64748b',
                       fontWeight: '500'
                     }}>
@@ -477,7 +387,7 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
               </div>
 
               <p style={{ 
-                fontSize: '14px', 
+                fontSize: '13px', 
                 color: '#94a3b8',
                 margin: 0
               }}>
