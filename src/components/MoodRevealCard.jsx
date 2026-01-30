@@ -29,7 +29,7 @@ export default function MoodRevealCard({ mood = 'moyen' }) {
       <h2 style={{ 
         fontSize: '18px', 
         fontWeight: '700',
-        color: '#0f172a',
+        color: 'var(--text)',
         marginBottom: '16px',
         alignSelf: 'flex-start'
       }}>

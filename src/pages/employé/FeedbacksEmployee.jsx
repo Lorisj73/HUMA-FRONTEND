@@ -43,7 +43,6 @@ export default function FeedbacksEmployee() {
   return (
     <div style={{ 
       minHeight: '100vh',
-      background: 'linear-gradient(180deg, rgba(191, 219, 254, 0.4) 0%, rgba(254, 215, 170, 0.4) 100%)',
       padding: '32px 0'
     }}>
       <div className="container" style={{ maxWidth: 1200 }}>
@@ -59,13 +58,13 @@ export default function FeedbacksEmployee() {
               fontSize: 42, 
               margin: '0 0 12px', 
               fontWeight: 700,
-              color: '#1E1E1E'
+              color: 'var(--text)'
             }}>
               La boîte à feedback
             </h1>
             <p style={{ 
               fontSize: 16, 
-              color: '#4B5563', 
+              color: 'var(--text)', 
               margin: 0, 
               maxWidth: 600,
               lineHeight: 1.5
@@ -138,7 +137,7 @@ export default function FeedbacksEmployee() {
                   fontSize: 18, 
                   fontWeight: 600, 
                   margin: 0,
-                  color: '#1E1E1E'
+                  color: 'var(--text)'
                 }}>
                   {category.name}
                 </h3>
@@ -146,13 +145,13 @@ export default function FeedbacksEmployee() {
                   width: 40,
                   height: 40,
                   borderRadius: '50%',
-                  background: 'rgba(255, 255, 255, 0.9)',
+                  background: 'var(--card)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: 16,
                   fontWeight: 600,
-                  color: '#1E1E1E',
+                  color: 'var(--text)',
                   boxShadow: '0 2px 8px rgba(0,0,0,0.08)'
                 }}>
                   {category.count}
@@ -161,10 +160,10 @@ export default function FeedbacksEmployee() {
 
               {/* Carte de proposition */}
               <div style={{
-                background: 'rgba(255, 255, 255, 0.8)',
+                background: 'var(--card)',
                 padding: 16,
                 borderRadius: 12,
-                border: '1px solid rgba(0,0,0,0.05)'
+                border: '1px solid var(--border)'
               }}>
                 <div style={{
                   fontSize: 11,
@@ -178,7 +177,7 @@ export default function FeedbacksEmployee() {
                 </div>
                 <p style={{
                   fontSize: 13,
-                  color: '#1E1E1E',
+                  color: 'var(--text)',
                   margin: 0,
                   lineHeight: 1.6,
                   fontStyle: 'italic'
@@ -204,14 +203,15 @@ export default function FeedbacksEmployee() {
             setShowModal(false)
           }}>
             <label style={{display:'block', marginBottom:24}}>
-              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'#1E1E1E'}}>Catégorie</div>
+              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'var(--text)'}}>Catégorie</div>
               <select style={{
                 width:'100%',
                 padding:'14px',
                 fontSize:15,
-                border:'1px solid #D1D5DB',
+                border:'1px solid var(--border)',
                 borderRadius:8,
-                background:'white',
+                background:'var(--card)',
+                color:'var(--text)',
                 cursor:'pointer',
                 outline:'none'
               }}>
@@ -225,15 +225,16 @@ export default function FeedbacksEmployee() {
             </label>
 
             <label style={{display:'block', marginBottom:32}}>
-              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'#1E1E1E'}}>Ton feedback</div>
+              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'var(--text)'}}>Ton feedback</div>
               <textarea 
                 style={{
                   width:'100%',
                   padding:'14px',
                   fontSize:15,
-                  border:'1px solid #D1D5DB',
+                  border:'1px solid var(--border)',
                   borderRadius:8,
-                  background:'white',
+                  background:'var(--card)',
+                  color:'var(--text)',
                   resize:'vertical',
                   minHeight:140,
                   outline:'none',
@@ -253,9 +254,9 @@ export default function FeedbacksEmployee() {
                   fontSize:15,
                   fontWeight:600,
                   borderRadius:8,
-                  border:'1px solid #D1D5DB',
-                  background:'white',
-                  color:'#374151',
+                  border:'1px solid var(--border)',
+                  background:'var(--card)',
+                  color:'var(--text)',
                   cursor:'pointer'
                 }}
               >

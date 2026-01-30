@@ -180,7 +180,7 @@ export default function CategoryDetail() {
             display: 'flex',
             alignItems: 'center',
             gap: 8,
-            color: '#1E1E1E',
+            color: 'var(--text)',
             marginBottom: 24
           }}
         >
@@ -191,7 +191,7 @@ export default function CategoryDetail() {
           fontSize: 28,
           margin: '0 0 4px',
           fontWeight: 700,
-          color: '#1E1E1E'
+          color: 'var(--text)'
         }}>
           {category?.name}
         </h1>
@@ -308,7 +308,7 @@ export default function CategoryDetail() {
                     <p style={{
                       fontSize: 14,
                       lineHeight: 1.5,
-                      color: '#1E1E1E',
+                      color: 'var(--text)',
                       margin: 0,
                       fontStyle: 'italic'
                     }}>

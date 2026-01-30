@@ -60,14 +60,14 @@ export default function MeEmployee() {
               fontSize: 32,
               margin: 0,
               fontWeight: 700,
-              color: '#1E1E1E',
+              color: 'var(--text)',
               marginBottom: 8
             }}>
               Ton espace personnel
             </h1>
             <p style={{
               fontSize: 16,
-              color: '#757575',
+              color: 'var(--muted)',
               margin: 0
             }}>
               Suis ton évolution personnelle dans l'environnement de ton entreprise.
@@ -78,7 +78,7 @@ export default function MeEmployee() {
             width: 80,
             height: 80,
             borderRadius: '50%',
-            background: 'white',
+            background: 'var(--card)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -95,20 +95,20 @@ export default function MeEmployee() {
               <circle cx="20" cy="20" r="20" fill="#0748EA"/>
               <text x="20" y="26" textAnchor="middle" fill="white" fontSize="18" fontWeight="700">CC</text>
             </svg>
-            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#1E1E1E' }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--text)' }}>
               Ta synthèse cette semaine
             </h2>
           </div>
 
           <div style={{
-            background: '#F7F6F4',
+            background: 'var(--bg)',
             padding: 20,
             borderRadius: 12
           }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px 0', color: '#1E1E1E' }}>
+            <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px 0', color: 'var(--text)' }}>
               Titre résumé
             </h3>
-            <p style={{ fontSize: 14, color: '#1E1E1E', margin: 0, lineHeight: 1.6 }}>
+            <p style={{ fontSize: 14, color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>
               Lorem ipsum dolor sit amet consectetur. Porta lobortis urna dignissim proin leo libero. Nulla tellus ornare vulputate eget sodales. Ut proin nunc nibh enim neque mattis. Sed nunc varius lorem accumsan enim.
             </p>
           </div>
@@ -123,10 +123,10 @@ export default function MeEmployee() {
         }}>
           {/* Evolution sur la semaine */}
           <div className="card" style={{ padding: isMobile ? '20px' : '24px' }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px 0', color: '#1E1E1E' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px 0', color: 'var(--text)' }}>
               Evolution sur la semaine
             </h3>
-            <p style={{ fontSize: 14, color: '#757575', margin: '0 0 20px 0' }}>
+            <p style={{ fontSize: 14, color: 'var(--muted)', margin: '0 0 20px 0' }}>
               Tes humeurs quotidiennes cette semaine
             </p>
 
@@ -153,7 +153,7 @@ export default function MeEmployee() {
             </div>
 
             {/* Graphique simplifié */}
-            <div style={{ position: 'relative', height: 200, background: '#F7F6F4', borderRadius: 12, padding: 20 }}>
+            <div style={{ position: 'relative', height: 200, background: 'var(--bg)', borderRadius: 12, padding: 20 }}>
               <svg width="100%" height="160" viewBox="0 0 500 160">
                 {/* Grille */}
                 {[0, 1, 2, 3, 4].map(i => (
@@ -174,7 +174,7 @@ export default function MeEmployee() {
                 </defs>
               </svg>
               {/* Labels des jours */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#757575', marginTop: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
                 {['L', 'M', 'M', 'J', 'V'].map((day, i) => (
                   <div key={i}>{day}</div>
                 ))}
@@ -185,38 +185,38 @@ export default function MeEmployee() {
                 top: 40,
                 left: '50%',
                 transform: 'translateX(-50%)',
-                background: 'white',
+                background: 'var(--card)',
                 padding: '8px 12px',
                 borderRadius: 8,
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
                 border: '1px solid #D9D9D9',
                 fontSize: 12
               }}>
-                <div style={{ fontWeight: 600, color: '#1E1E1E' }}>Sous tension</div>
-                <div style={{ color: '#757575', fontSize: 10 }}>Charge/Rythme</div>
+                <div style={{ fontWeight: 600, color: 'var(--text)' }}>Sous tension</div>
+                <div style={{ color: 'var(--muted)', fontSize: 10 }}>Charge/Rythme</div>
               </div>
             </div>
 
             {/* Stats : Jours */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 24, textAlign: 'center' }}>
               <div>
-                <div style={{ fontSize: 36, fontWeight: 700, color: '#1E1E1E' }}>{excellentDays}</div>
-                <div style={{ fontSize: 13, color: '#757575' }}>Jour Excellent</div>
+                <div style={{ fontSize: 36, fontWeight: 700, color: 'var(--text)' }}>{excellentDays}</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>Jour Excellent</div>
               </div>
               <div>
-                <div style={{ fontSize: 36, fontWeight: 700, color: '#1E1E1E' }}>{goodDays}</div>
-                <div style={{ fontSize: 13, color: '#757575' }}>Jours corrects</div>
+                <div style={{ fontSize: 36, fontWeight: 700, color: 'var(--text)' }}>{goodDays}</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>Jours corrects</div>
               </div>
               <div>
-                <div style={{ fontSize: 36, fontWeight: 700, color: '#1E1E1E' }}>{difficultDays}</div>
-                <div style={{ fontSize: 13, color: '#757575' }}>Jour difficile</div>
+                <div style={{ fontSize: 36, fontWeight: 700, color: 'var(--text)' }}>{difficultDays}</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)' }}>Jour difficile</div>
               </div>
             </div>
           </div>
 
           {/* Facteurs d'influence */}
           <div className="card" style={{ padding: isMobile ? '20px' : '24px' }}>
-            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 16px 0', color: '#1E1E1E' }}>
+            <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 16px 0', color: 'var(--text)' }}>
               Facteurs d'influence
             </h3>
 
@@ -228,8 +228,8 @@ export default function MeEmployee() {
                   borderRadius: 20,
                   border: '1px solid #D9D9D9',
                   fontSize: 12,
-                  color: '#1E1E1E',
-                  background: 'white'
+                  color: 'var(--text)',
+                  background: 'var(--card)'
                 }}>
                   {tag}
                 </span>
@@ -240,8 +240,8 @@ export default function MeEmployee() {
             {influenceFactors.map((factor, i) => (
               <div key={i} style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 14, color: '#1E1E1E' }}>{factor.label}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#1E1E1E' }}>{factor.value}%</span>
+                  <span style={{ fontSize: 14, color: 'var(--text)' }}>{factor.label}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{factor.value}%</span>
                 </div>
                 <div style={{
                   width: '100%',
@@ -279,11 +279,11 @@ export default function MeEmployee() {
                 fontSize: 20
               }}>★</div>
               <div>
-                <div style={{ fontSize: 13, color: '#757575', marginBottom: 4 }}>Humeur moyenne</div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: '#1E1E1E' }}>{avgMood.toFixed(1).replace('.', ',')}/10</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>Humeur moyenne</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>{avgMood.toFixed(1).replace('.', ',')}/10</div>
               </div>
             </div>
-            <div style={{ fontSize: 14, color: '#1E1E1E' }}>+0,8 vs semaine dernière</div>
+            <div style={{ fontSize: 14, color: 'var(--text)' }}>+0,8 vs semaine dernière</div>
           </div>
 
           {/* Participation */}
@@ -301,11 +301,11 @@ export default function MeEmployee() {
                 fontSize: 20
               }}>✓</div>
               <div>
-                <div style={{ fontSize: 13, color: '#757575', marginBottom: 4 }}>Participation</div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: '#1E1E1E' }}>{participation}/{totalDays} jours</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>Participation</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>{participation}/{totalDays} jours</div>
               </div>
             </div>
-            <div style={{ fontSize: 14, color: '#1E1E1E' }}>{Math.round((participation/totalDays)*100)}% cette semaine</div>
+            <div style={{ fontSize: 14, color: 'var(--text)' }}>{Math.round((participation/totalDays)*100)}% cette semaine</div>
           </div>
 
           {/* Niveau */}
@@ -323,11 +323,11 @@ export default function MeEmployee() {
                 fontSize: 20
               }}>★</div>
               <div>
-                <div style={{ fontSize: 13, color: '#757575', marginBottom: 4 }}>Niveau</div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: '#1E1E1E' }}>{level}</div>
+                <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>Niveau</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>{level}</div>
               </div>
             </div>
-            <div style={{ fontSize: 14, color: '#1E1E1E' }}>{xp}/{maxXp} XP</div>
+            <div style={{ fontSize: 14, color: 'var(--text)' }}>{xp}/{maxXp} XP</div>
           </div>
         </div>
 
@@ -347,10 +347,10 @@ export default function MeEmployee() {
               flexShrink: 0
             }}>ⓘ</div>
             <div style={{ flex: 1 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px 0', color: '#1E1E1E' }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, margin: '0 0 8px 0', color: 'var(--text)' }}>
                 Badge du super héros
               </h3>
-              <p style={{ fontSize: 14, color: '#757575', margin: '0 0 16px 0' }}>
+              <p style={{ fontSize: 14, color: 'var(--muted)', margin: '0 0 16px 0' }}>
                 Ce badge t'es attribué quand tu répondas au check-in pendant 5 jours consécutifs
               </p>
               <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
@@ -368,7 +368,7 @@ export default function MeEmployee() {
                     borderRadius: 20
                   }} />
                 </div>
-                <span style={{ fontSize: 16, fontWeight: 600, color: '#1E1E1E' }}>80%</span>
+                <span style={{ fontSize: 16, fontWeight: 600, color: 'var(--text)' }}>80%</span>
               </div>
             </div>
           </div>
@@ -378,7 +378,7 @@ export default function MeEmployee() {
             borderRadius: 8,
             border: 'none',
             background: 'transparent',
-            color: '#1E1E1E',
+            color: 'var(--text)',
             fontSize: 14,
             fontWeight: 500,
             cursor: 'pointer',

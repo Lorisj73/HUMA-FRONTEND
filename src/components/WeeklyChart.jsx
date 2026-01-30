@@ -151,7 +151,7 @@ export default function WeeklyChart() {
           >
             <p style={{ 
               fontWeight: '600', 
-              color: '#0f172a', 
+              color: 'var(--text)', 
               fontSize: '14px',
               margin: '0 0 2px 0'
             }}>
