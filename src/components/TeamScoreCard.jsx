@@ -56,7 +56,7 @@ export default function TeamScoreCard({
           <h2 style={{
             fontSize: '18px',
             fontWeight: '700',
-            color: '#0f172a',
+            color: 'var(--text)',
             marginBottom: '2px'
           }}>
             Le score de l'équipe aujourd'hui
@@ -69,7 +69,6 @@ export default function TeamScoreCard({
             {weatherText}
           </p>
         </div>
-        <img src={weatherIcon} alt="Météo" style={{ width: '40px', height: '40px' }} />
       </div>
 
       <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>
@@ -113,7 +112,7 @@ export default function TeamScoreCard({
               transform: 'translate(-50%, -50%)',
               textAlign: 'center'
             }}>
-              <div style={{ fontSize: '24px', fontWeight: '700', color: '#0f172a' }}>
+              <div style={{ fontSize: '24px', fontWeight: '700', color: 'var(--text)' }}>
                 {score.toFixed(1).replace('.', ',')}
               </div>
               <div style={{ fontSize: '12px', color: '#94a3b8' }}>/{maxScore}</div>

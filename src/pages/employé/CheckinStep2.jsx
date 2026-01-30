@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-export default function CheckinStep2({ onNavigate, onBack }) {
+export default function CheckinStep2() {
+  const navigate = useNavigate()
   const [selectedOptions, setSelectedOptions] = useState(() => {
     const saved = localStorage.getItem('huma_checkin_options')
     return saved ? JSON.parse(saved) : []
@@ -53,7 +55,7 @@ export default function CheckinStep2({ onNavigate, onBack }) {
       }}>
         
         {/* Icône de fermeture */}
-        <div style={{position: 'absolute', top: 24, right: 24, cursor: 'pointer'}} onClick={() => onNavigate?.('Accueil')}>
+        <div style={{position: 'absolute', top: 24, right: 24, cursor: 'pointer'}} onClick={() => navigate('/')}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6L18 18" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -153,8 +155,8 @@ export default function CheckinStep2({ onNavigate, onBack }) {
           gap: 12,
           marginTop: '8px'
         }}>
-          <button 
-            onClick={() => onBack?.()}
+          <button
+            onClick={() => navigate('/checkin')}
             style={{
               background: 'white',
               color: '#0748EA',
@@ -169,8 +171,8 @@ export default function CheckinStep2({ onNavigate, onBack }) {
           >
             Retour
           </button>
-          <button 
-            onClick={() => onNavigate?.('CheckinStep3')}
+          <button
+            onClick={() => navigate('/checkin/step3')}
             style={{
             background: '#0748EA',
             color: 'white',

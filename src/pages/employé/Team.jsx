@@ -74,14 +74,14 @@ export default function Nous() {
               fontSize: 32,
               margin: 0,
               fontWeight: 700,
-              color: '#1E1E1E',
+              color: 'var(--text)',
               marginBottom: 8
             }}>
               La météo de ton équipe
             </h1>
             <p style={{
               fontSize: 16,
-              color: '#757575',
+              color: 'var(--muted)',
               margin: 0
             }}>
               Suis l'évolution de ton équipe au sein de l'entreprise.
@@ -100,10 +100,10 @@ export default function Nous() {
           <div className="card" style={{ padding: isMobile ? '20px' : '32px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
               <div>
-                <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#1E1E1E', marginBottom: 4 }}>
+                <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--text)', marginBottom: 4 }}>
                   Climat de l'équipe
                 </h2>
-                <p style={{ fontSize: 14, color: '#757575', margin: 0 }}>
+                <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
                   Aujourd'hui
                 </p>
               </div>
@@ -112,14 +112,14 @@ export default function Nous() {
 
             {/* Titre résumé */}
             <div style={{
-              background: '#F7F6F4',
+              background: 'var(--bg)',
               padding: 20,
               borderRadius: 12
             }}>
-              <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px 0', color: '#1E1E1E' }}>
+              <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px 0', color: 'var(--text)' }}>
                 Titre résumé
               </h3>
-              <p style={{ fontSize: 14, color: '#1E1E1E', margin: 0, lineHeight: 1.6 }}>
+              <p style={{ fontSize: 14, color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>
                 Lorem ipsum dolor sit amet consectetur. Porta lobortis urna dignissim proin leo libero. Nulla tellus ornare vulputate eget sodales. Ut proin nunc nibh enim neque mattis. Sed nunc varius lorem accumsan enim.
               </p>
             </div>
@@ -128,10 +128,10 @@ export default function Nous() {
           {/* Carte Score bien-être */}
           <div className="card" style={{ padding: isMobile ? '20px' : '32px' }}>
             <div style={{ marginBottom: 20 }}>
-              <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: '#1E1E1E', marginBottom: 4 }}>
+              <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--text)', marginBottom: 4 }}>
                 Score bien-être de ton équipe
               </h2>
-              <p style={{ fontSize: 14, color: '#757575', margin: 0 }}>
+              <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
                 Depuis le début d'année
               </p>
             </div>
@@ -195,11 +195,11 @@ export default function Nous() {
                   transform: 'translateX(-50%)',
                   textAlign: 'center'
                 }}>
-                  <div style={{ fontSize: 36, fontWeight: 700, color: '#1E1E1E', lineHeight: 1, marginBottom: 4 }}>
+                  <div style={{ fontSize: 36, fontWeight: 700, color: 'var(--text)', lineHeight: 1, marginBottom: 4 }}>
                     {teamScore.toFixed(1).replace('.', ',')}
                   </div>
-                  <div style={{ fontSize: 14, color: '#757575', marginBottom: 2 }}>/10</div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#1E1E1E' }}>
+                  <div style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 2 }}>/10</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
                     Serein
                   </div>
                 </div>
@@ -209,13 +209,13 @@ export default function Nous() {
             {/* Stats des humeurs */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 14, color: '#757575' }}>230 x serein</span>
+                <span style={{ fontSize: 14, color: 'var(--muted)' }}>230 x serein</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 14, color: '#757575' }}>110 x épanoui</span>
+                <span style={{ fontSize: 14, color: 'var(--muted)' }}>110 x épanoui</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 14, color: '#757575' }}>50 x mitigé</span>
+                <span style={{ fontSize: 14, color: 'var(--muted)' }}>50 x mitigé</span>
               </div>
             </div>
 
@@ -226,7 +226,7 @@ export default function Nous() {
               gap: 8,
               marginTop: 20,
               padding: 16,
-              background: '#F7F6F4',
+              background: 'var(--bg)',
               borderRadius: 8
             }}>
               <div style={{
@@ -238,12 +238,12 @@ export default function Nous() {
                 alignItems: 'center',
                 justifyContent: 'center',
                 fontSize: 12,
-                color: '#757575',
+                color: 'var(--muted)',
                 flexShrink: 0
               }}>
                 i
               </div>
-              <p style={{ fontSize: 13, color: '#757575', margin: 0, lineHeight: 1.5 }}>
+              <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
                 Le score bien-être de l'entreprise est actuellement de 6,8.
               </p>
             </div>
@@ -259,10 +259,10 @@ export default function Nous() {
         }}>
           {/* Evolution sur la semaine */}
           <div className="card" style={{ padding: isMobile ? '20px' : '32px' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 8px 0', color: '#1E1E1E' }}>
+            <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 8px 0', color: 'var(--text)' }}>
               Evolution sur la semaine
             </h3>
-            <p style={{ fontSize: 14, color: '#757575', margin: '0 0 20px 0' }}>
+            <p style={{ fontSize: 14, color: 'var(--muted)', margin: '0 0 20px 0' }}>
               Les humeurs quotidiennes de ton équipe et les tiennes cette semaine
             </p>
 
@@ -301,7 +301,7 @@ export default function Nous() {
             </div>
 
             {/* Graphique */}
-            <div style={{ position: 'relative', height: 250, background: '#F7F6F4', borderRadius: 12, padding: 20 }}>
+            <div style={{ position: 'relative', height: 250, background: 'var(--bg)', borderRadius: 12, padding: 20 }}>
               <svg width="100%" height="210" viewBox="0 0 600 210">
                 {/* Grille */}
                 {[0, 1, 2, 3, 4].map(i => (
@@ -333,7 +333,7 @@ export default function Nous() {
                 </defs>
               </svg>
               {/* Labels des jours */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#757575', marginTop: 8, paddingLeft: 20, paddingRight: 20 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginTop: 8, paddingLeft: 20, paddingRight: 20 }}>
                 {['L', 'M', 'M', 'J', 'V'].map((day, i) => (
                   <div key={i}>{day}</div>
                 ))}
@@ -343,23 +343,23 @@ export default function Nous() {
             {/* Stats : Jours */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginTop: 24, textAlign: 'center' }}>
               <div>
-                <div style={{ fontSize: 40, fontWeight: 700, color: '#1E1E1E' }}>{excellentDays}</div>
-                <div style={{ fontSize: 14, color: '#757575' }}>Jour Excellent</div>
+                <div style={{ fontSize: 40, fontWeight: 700, color: 'var(--text)' }}>{excellentDays}</div>
+                <div style={{ fontSize: 14, color: 'var(--muted)' }}>Jour Excellent</div>
               </div>
               <div>
-                <div style={{ fontSize: 40, fontWeight: 700, color: '#1E1E1E' }}>{goodDays}</div>
-                <div style={{ fontSize: 14, color: '#757575' }}>Jours corrects</div>
+                <div style={{ fontSize: 40, fontWeight: 700, color: 'var(--text)' }}>{goodDays}</div>
+                <div style={{ fontSize: 14, color: 'var(--muted)' }}>Jours corrects</div>
               </div>
               <div>
-                <div style={{ fontSize: 40, fontWeight: 700, color: '#1E1E1E' }}>{difficultDays}</div>
-                <div style={{ fontSize: 14, color: '#757575' }}>Jour difficile</div>
+                <div style={{ fontSize: 40, fontWeight: 700, color: 'var(--text)' }}>{difficultDays}</div>
+                <div style={{ fontSize: 14, color: 'var(--muted)' }}>Jour difficile</div>
               </div>
             </div>
           </div>
 
           {/* Facteurs d'influence */}
           <div className="card" style={{ padding: isMobile ? '20px' : '32px' }}>
-            <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 16px 0', color: '#1E1E1E' }}>
+            <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 16px 0', color: 'var(--text)' }}>
               Facteurs d'influence
             </h3>
 
@@ -371,8 +371,8 @@ export default function Nous() {
                   borderRadius: 20,
                   border: '1px solid #D9D9D9',
                   fontSize: 12,
-                  color: '#1E1E1E',
-                  background: 'white'
+                  color: 'var(--text)',
+                  background: 'var(--card)'
                 }}>
                   {tag}
                 </span>
@@ -383,8 +383,8 @@ export default function Nous() {
             {influenceFactors.map((factor, i) => (
               <div key={i} style={{ marginBottom: 16 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
-                  <span style={{ fontSize: 14, color: '#1E1E1E' }}>{factor.label}</span>
-                  <span style={{ fontSize: 14, fontWeight: 600, color: '#1E1E1E' }}>{factor.value}%</span>
+                  <span style={{ fontSize: 14, color: 'var(--text)' }}>{factor.label}</span>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>{factor.value}%</span>
                 </div>
                 <div style={{
                   width: '100%',

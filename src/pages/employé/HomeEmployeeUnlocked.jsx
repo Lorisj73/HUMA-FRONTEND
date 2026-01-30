@@ -5,8 +5,9 @@ import Nuageux from '@/media/logo_meteo/Nuageux.png'
 import SoleilNuageux from '@/media/logo_meteo/Soleil_nuageux.png'
 import Soleil from '@/media/logo_meteo/Soleil.png'
 import TeamScoreCard from '@/components/TeamScoreCard'
+import WeeklyChart from '@/components/WeeklyChart'
 
-export default function HomeEmployeeUnlocked({ onNavigate }) {
+export default function HomeEmployeeUnlocked() {
   const [lastCheckin, setLastCheckin] = useState(null)
   const [checkinHistory, setCheckinHistory] = useState([])
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -150,123 +151,7 @@ export default function HomeEmployeeUnlocked({ onNavigate }) {
             />
 
             {/* Evolution sur la semaine */}
-            <div className="card" style={{ padding: '20px' }}>
-              <h2 style={{ 
-                fontSize: '18px', 
-                fontWeight: '700',
-                color: '#0f172a',
-                marginBottom: '2px'
-              }}>
-                Evolution sur la semaine
-              </h2>
-              <p style={{ 
-                fontSize: '13px', 
-                color: '#94a3b8',
-                marginBottom: '16px'
-              }}>
-                Les humeurs quotidiennes de ton équipe cette semaine
-              </p>
-
-              {/* Graphique */}
-              <div style={{ position: 'relative', width: '100%', height: '160px', paddingBottom: '16px' }}>
-                <svg viewBox="0 0 610 180" width="100%" height="160" preserveAspectRatio="xMidYMid meet">
-                  {/* Fond gris */}
-                  <rect width="610" height="180" fill="#F7F6F4"/>
-                  
-                  {/* Grille horizontale */}
-                  <rect x="0" y="15" width="610" height="30" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
-                  <rect x="0" y="45" width="610" height="30" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
-                  <rect x="0" y="75" width="610" height="30" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
-                  <rect x="0" y="105" width="610" height="30" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
-                  <rect x="0" y="135" width="610" height="30" stroke="#D9D9D9" strokeWidth="0.2" fill="none"/>
-                  
-                  {/* Zone sous la courbe avec gradient */}
-                  <path 
-                    d="M0,15 C80,25 120,34 164,37 C227,41 247,89 313,95 C374,101 404,59 466,59 L466,165 L0,165 Z" 
-                    fill="url(#evolutionGradient)"
-                  />
-                  
-                  {/* Courbe bleue */}
-                  <path 
-                    d="M0,15 C80,25 120,34 164,37 C227,41 247,89 313,95 C374,101 404,59 466,59" 
-                    fill="none" 
-                    stroke="#0748EA" 
-                    strokeWidth="2"
-                  />
-                  
-                  {/* Ligne pointillée continuant la courbe */}
-                  <line 
-                    x1="466" 
-                    y1="59" 
-                    x2="610" 
-                    y2="59" 
-                    stroke="#303030" 
-                    strokeWidth="2" 
-                    strokeDasharray="4 4"
-                  />
-                  
-                  {/* Point noir à la fin */}
-                  <circle cx="466" cy="59" r="4.5" fill="#1E1E1E"/>
-                  
-                  <defs>
-                    <linearGradient id="evolutionGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-                      <stop offset="0%" stopColor="white" stopOpacity="0.3"/>
-                      <stop offset="100%" stopColor="#0748EA" stopOpacity="0.8"/>
-                    </linearGradient>
-                  </defs>
-                </svg>
-
-                {/* Label "Sous tension" avec flèche */}
-                <div style={{
-                  position: 'absolute',
-                  top: '34px',
-                  left: '40%',
-                  background: 'white',
-                  padding: '6px 10px',
-                  borderRadius: '6px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                  fontSize: '12px',
-                  border: '1px solid #D9D9D9',
-                  zIndex: 10
-                }}>
-                  <div style={{ fontWeight: '600', color: '#1E1E1E', marginBottom: '1px' }}>Sous tension</div>
-                  <div style={{ color: '#757575', fontSize: '10px' }}>Charge/Rythme</div>
-                  {/* Petite flèche vers le bas */}
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '-6px',
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    width: 0,
-                    height: 0,
-                    borderLeft: '6px solid transparent',
-                    borderRight: '6px solid transparent',
-                    borderTop: '6px solid white'
-                  }}></div>
-                </div>
-
-                {/* Jours de la semaine */}
-                <div style={{ 
-                  position: 'absolute',
-                  bottom: '0',
-                  left: 0,
-                  right: 0,
-                  fontSize: '12px',
-                  color: '#757575',
-                  fontWeight: '400'
-                }}>
-                  {[
-                    { day: 'L', x: '3%' },
-                    { day: 'M', x: '23%' },
-                    { day: 'M', x: '45%' },
-                    { day: 'J', x: '68%' },
-                    { day: 'V', x: '88%' }
-                  ].map((item, i) => (
-                    <span key={i} style={{ position: 'absolute', left: item.x }}>{item.day}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <WeeklyChart />
           </div>
 
           {/* Colonne droite */}

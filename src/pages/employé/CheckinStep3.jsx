@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 // Import des images météo
 import Orage from '@/media/logo_meteo/Orage.png'
@@ -7,7 +8,8 @@ import Nuageux from '@/media/logo_meteo/Nuageux.png'
 import SoleilNuageux from '@/media/logo_meteo/Soleil_nuageux.png'
 import Soleil from '@/media/logo_meteo/Soleil.png'
 
-export default function CheckinStep3({ onNavigate, onBack }) {
+export default function CheckinStep3() {
+  const navigate = useNavigate()
   const [comment, setComment] = useState('')
   const [showSuggestion, setShowSuggestion] = useState(true)
   const [weatherImage, setWeatherImage] = useState(Soleil)
@@ -49,13 +51,13 @@ export default function CheckinStep3({ onNavigate, onBack }) {
     
     // Here you would submit to API
     console.log('Check-in completed:', checkinData)
-    
+
     // Clear temporary localStorage
     localStorage.removeItem('huma_checkin_mood')
     localStorage.removeItem('huma_checkin_options')
     localStorage.removeItem('huma_checkin_comment')
-    
-    onNavigate?.('HomeUnlocked')
+
+    navigate('/')
   }
 
   return (
@@ -85,7 +87,7 @@ export default function CheckinStep3({ onNavigate, onBack }) {
       }}>
         {/* Close X */}
         <button
-          onClick={() => onNavigate?.('Accueil')}
+          onClick={() => navigate('/')}
           style={{
             position: 'absolute',
             top: 20,
@@ -152,7 +154,7 @@ export default function CheckinStep3({ onNavigate, onBack }) {
 
         {/* Back Link */}
         <button
-          onClick={() => onBack?.()}
+          onClick={() => navigate('/checkin/step2')}
           style={{
             background: 'none',
             border: 'none',

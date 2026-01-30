@@ -78,6 +78,7 @@ export default function OnboardingEmployee({ onDone }) {
   const [step, setStep] = useState(0)
   const [prenom, setPrenom] = useState('')
   const [nom, setNom] = useState('')
+  const [isManager, setIsManager] = useState(false)
   const [motivation, setMotivation] = useState(null)
   const [environnementTravail, setEnvironnementTravail] = useState(null)
   const [energieSources, setEnergieSources] = useState(null)
@@ -92,6 +93,7 @@ export default function OnboardingEmployee({ onDone }) {
     } else {
       localStorage.setItem('huma_prenom', prenom.trim())
       localStorage.setItem('huma_nom', nom.trim())
+      localStorage.setItem('huma_is_manager', isManager ? '1' : '0')
       localStorage.setItem('huma_onboarding_done','1')
       if(motivation) localStorage.setItem('huma_motivation', motivation)
       if(environnementTravail) localStorage.setItem('huma_environnement_travail', environnementTravail)
@@ -470,6 +472,30 @@ export default function OnboardingEmployee({ onDone }) {
                   onFocus={(e) => e.target.style.borderColor = '#0748EA'}
                   onBlur={(e) => e.target.style.borderColor = '#D9D9D9'}
                 />
+              </div>
+
+              <div style={{marginBottom: 32}}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 12,
+                  cursor: 'pointer',
+                  fontSize: 14,
+                  color: '#1E1E1E',
+                  userSelect: 'none'
+                }}>
+                  <input 
+                    type="checkbox"
+                    checked={isManager}
+                    onChange={(e) => setIsManager(e.target.checked)}
+                    style={{
+                      width: 18,
+                      height: 18,
+                      cursor: 'pointer'
+                    }}
+                  />
+                  <span style={{ fontWeight: 500 }}>Je suis manager</span>
+                </label>
               </div>
 
               <div style={{
