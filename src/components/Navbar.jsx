@@ -1,6 +1,19 @@
 import { useState, useEffect } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 
-export default function Navbar({ current='Accueil', onNavigate }){
+export default function Navbar(){
+  const location = useLocation()
+
+  // Mapping des routes vers les noms d'onglets
+  const getTabFromPath = (path) => {
+    if (path === '/' || path === '/accueil') return 'Accueil'
+    if (path === '/moi') return 'Moi'
+    if (path === '/nous' || path === '/mon-equipe') return 'Mon équipe'
+    if (path === '/feedbacks' || path.startsWith('/category')) return 'Feedbacks'
+    return ''
+  }
+
+  const current = getTabFromPath(location.pathname)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [menuOpen, setMenuOpen] = useState(false)
 
@@ -13,15 +26,23 @@ export default function Navbar({ current='Accueil', onNavigate }){
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
+  // Mapping des noms d'onglets vers les routes
+  const tabRoutes = {
+    'Accueil': '/',
+    'Moi': '/moi',
+    'Mon équipe': '/mon-equipe',
+    'Feedbacks': '/feedbacks'
+  }
+
   return (
     <nav className="navbar">
       <div className="container navbar-inner" style={{justifyContent:'space-between', maxWidth: 1400}}>
         <div style={{display:'flex', alignItems:'center', gap: isMobile ? 12 : 40, flex: 1}}>
           <div className="brand" style={{fontSize: 20, fontWeight: 800}}>HUMA</div>
-          
+
           {isMobile ? (
             <>
-              <button 
+              <button
                 onClick={() => setMenuOpen(!menuOpen)}
                 style={{
                   marginLeft: 'auto',
@@ -43,7 +64,7 @@ export default function Navbar({ current='Accueil', onNavigate }){
                 <div style={{width: 20, height: 2, background: '#1E1E1E', borderRadius: 2}}></div>
                 <div style={{width: 20, height: 2, background: '#1E1E1E', borderRadius: 2}}></div>
               </button>
-              
+
               {menuOpen && (
                 <div style={{
                   position: 'fixed',
@@ -59,13 +80,11 @@ export default function Navbar({ current='Accueil', onNavigate }){
                   gap: 8
                 }}>
                   {['Accueil','Moi','Mon équipe','Feedbacks'].map(tab => (
-                    <button 
-                      key={tab} 
-                      className={"tab" + (current===tab?' active':'')} 
-                      onClick={()=>{
-                        onNavigate?.(tab)
-                        setMenuOpen(false)
-                      }}
+                    <Link
+                      key={tab}
+                      to={tabRoutes[tab]}
+                      className={"tab" + (current===tab?' active':'')}
+                      onClick={() => setMenuOpen(false)}
                       style={{
                         padding: '12px 16px',
                         textAlign: 'left',
@@ -74,11 +93,14 @@ export default function Navbar({ current='Accueil', onNavigate }){
                         background: current===tab ? '#f0f0f0' : 'transparent',
                         borderRadius: '8px',
                         cursor: 'pointer',
-                        fontSize: '15px'
+                        fontSize: '15px',
+                        textDecoration: 'none',
+                        color: 'inherit',
+                        display: 'block'
                       }}
                     >
                       {tab}
-                    </button>
+                    </Link>
                   ))}
                 </div>
               )}
@@ -86,7 +108,14 @@ export default function Navbar({ current='Accueil', onNavigate }){
           ) : (
             <div className="tabs">
               {['Accueil','Moi','Mon équipe','Feedbacks'].map(tab => (
-                <button key={tab} className={"tab" + (current===tab?' active':'')} onClick={()=>onNavigate?.(tab)}>{tab}</button>
+                <Link
+                  key={tab}
+                  to={tabRoutes[tab]}
+                  className={"tab" + (current===tab?' active':'')}
+                  style={{textDecoration: 'none', color: 'inherit'}}
+                >
+                  {tab}
+                </Link>
               ))}
             </div>
           )}

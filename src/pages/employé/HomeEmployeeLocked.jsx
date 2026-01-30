@@ -1,7 +1,9 @@
 import LockIcon from '@/components/LockIcon'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
-export default function HomeEmployeeLocked({ onNavigate }) {
+export default function HomeEmployeeLocked() {
+  const navigate = useNavigate()
   const [openCheckin, setOpenCheckin] = useState(false)
 
   return (
@@ -101,7 +103,7 @@ export default function HomeEmployeeLocked({ onNavigate }) {
                   cursor:'pointer',
                   boxShadow:'0px 2px 1px rgba(12, 12, 13, 0.1)'
                 }}
-                onClick={() => onNavigate?.('Checkin')}
+                onClick={() => navigate('/checkin')}
               >
                 Faire mon check-in
               </button>

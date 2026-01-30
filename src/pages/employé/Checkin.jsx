@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 // Import des images météo
 import Orage from '@/media/logo_meteo/Orage.png'
@@ -7,7 +8,8 @@ import Nuageux from '@/media/logo_meteo/Nuageux.png'
 import SoleilNuageux from '@/media/logo_meteo/Soleil_nuageux.png'
 import Soleil from '@/media/logo_meteo/Soleil.png'
 
-export default function Checkin({ onNavigate }) {
+export default function Checkin() {
+  const navigate = useNavigate()
   const [currentStep, setCurrentStep] = useState(1)
   const [moodValue, setMoodValue] = useState(() => {
     const saved = localStorage.getItem('huma_checkin_mood')
@@ -107,7 +109,7 @@ export default function Checkin({ onNavigate }) {
         </div>
 
         {/* Icône de fermeture */}
-        <div style={{position: 'absolute', top: 24, right: 24, cursor: 'pointer'}} onClick={() => onNavigate?.('Accueil')}>
+        <div style={{position: 'absolute', top: 24, right: 24, cursor: 'pointer'}} onClick={() => navigate('/')}>
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
             <path d="M18 6L6 18M6 6L18 18" stroke="black" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
@@ -192,8 +194,8 @@ export default function Checkin({ onNavigate }) {
         </div>
 
         {/* Bouton de validation */}
-        <button 
-          onClick={() => onNavigate?.('CheckinStep2')}
+        <button
+          onClick={() => navigate('/checkin/step2')}
           style={{
           background: '#0748EA',
           color: 'white',

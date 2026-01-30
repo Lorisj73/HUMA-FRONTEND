@@ -69,7 +69,6 @@ export default function TeamScoreCard({
             {weatherText}
           </p>
         </div>
-        <img src={weatherIcon} alt="Météo" style={{ width: '40px', height: '40px' }} />
       </div>
 
       <div style={{ display: 'flex', gap: '24px', alignItems: 'center' }}>

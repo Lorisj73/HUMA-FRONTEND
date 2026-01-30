@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Modal from '@/components/Modal'
 
-export default function FeedbacksEmployee({ onNavigate, onCategorySelect }) {
+export default function FeedbacksEmployee() {
+  const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
 
   // Données des catégories avec leurs compteurs
@@ -112,8 +114,9 @@ export default function FeedbacksEmployee({ onNavigate, onCategorySelect }) {
                 minHeight: 220
               }}
               onClick={() => {
-                if (onCategorySelect) onCategorySelect(category)
-                if (onNavigate) onNavigate('CategoryDetail')
+                // Encode le nom de la catégorie pour l'utiliser dans l'URL
+                const categoryId = encodeURIComponent(category.name)
+                navigate(`/category/${categoryId}`)
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-4px)'

@@ -27,35 +27,52 @@ Access in code via `import.meta.env.VITE_API_URL`
 
 ## Architecture
 
-### State-Based Navigation (No Router)
-Navigation is **state-based**, not route-based. The entire app uses a single `page` state variable in `App.jsx`:
+### React Router Navigation
+Navigation uses **React Router v6** for route-based navigation. The app uses `BrowserRouter` with declarative routes in `App.jsx`:
 
 ```javascript
-const [page, setPage] = useState('Accueil')
-// Pages rendered conditionally: {page === 'Accueil' && <HomeEmployee />}
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 ```
 
 **Important patterns:**
-- Use `onNavigate` prop pattern for page changes: `onNavigate?.('PageName')`
-- Multi-step flows (like check-in) use separate page states: `Checkin`, `CheckinStep2`, `CheckinStep3`
-- DO NOT use react-router or similar libraries
+- Use `useNavigate()` hook for programmatic navigation: `navigate('/path')`
+- Use `<Link to="/path">` or `<NavLink to="/path">` for navigation links
+- Multi-step flows use nested routes: `/checkin`, `/checkin/step2`, `/checkin/step3`
+- Use `useParams()` to access URL parameters (e.g., `/category/:categoryId`)
+- The `Navbar` component uses `<Link>` components and `useLocation()` to highlight the active tab
+
+### Route Structure
+Main routes defined in `App.jsx`:
+- `/` - Home page (HomeEmployee) - Shows locked state before check-in, unlocked after
+- `/accueil` - Redirects to `/`
+- `/moi` - User profile (MeEmployee)
+- `/nous` or `/mon-equipe` - Team page (Nous)
+- `/feedbacks` - Feedbacks listing (FeedbacksEmployee)
+- `/category/:categoryId` - Category detail with URL parameter
+- `/checkin` - Check-in step 1
+- `/checkin/step2` - Check-in step 2
+- `/checkin/step3` - Check-in step 3
+
+**Important**: The home page (`HomeEmployee`) is a unified component that automatically detects if a check-in has been completed by checking `localStorage` for `huma_checkin_history`. It renders either the locked or unlocked state accordingly.
 
 ### Onboarding Flow
 The app shows a multi-step onboarding (`Onboarding.jsx`) on first load:
-- Controlled by `showOnboarding` state in `App.jsx`
+- Controlled by `showOnboarding` state in `AppLayout` component
 - 8 steps (0-7): Welcome → SSO → Name Collection → How it Works → 3 questionnaires → Success
+- Uses `onDone` callback to signal completion, which triggers navigation to `/` (home page)
 - Stores data to `localStorage`:
   - `huma_onboarding_done`: '1' when complete
   - `huma_prenom`, `huma_nom`: User name
   - `huma_motivation`, `huma_environnement_travail`, `huma_energie_sources`: Questionnaire answers
 
 ### Check-in System (Multi-Step)
-Users can check in their mood through a 3-step flow:
-1. **Checkin**: Mood slider with weather icons (Orage → Pluvieux → Nuageux → SoleilNuageux → Soleil based on value)
-2. **CheckinStep2**: Additional feelings/context
-3. **CheckinStep3**: Final confirmation
+Users can check in their mood through a 3-step flow using route-based navigation:
+1. **Route `/checkin`**: Mood slider with weather icons (Orage → Pluvieux → Nuageux → SoleilNuageux → Soleil based on value)
+2. **Route `/checkin/step2`**: Additional feelings/context selection
+3. **Route `/checkin/step3`**: Final confirmation and optional comment
 
-Navigation uses `onNavigate` to move between steps and `onBack` for backward navigation.
+Navigation uses `navigate('/checkin/step2')` to move forward and `navigate('/checkin')` to go back. After completing the check-in, the user is redirected to `/` (home page), which automatically shows the unlocked state.
 
 ### Import Aliases
 Always use `@/` for src imports (configured in `vite.config.js`):
@@ -147,21 +164,59 @@ All modals use `open` prop and `onClose` callback. Multi-step modals (like `Chec
 
 ## Key Files Reference
 
-- **Navigation logic**: `src/App.jsx` - State-based routing, onboarding control
+- **Navigation logic**: `src/App.jsx` - React Router setup, route definitions, onboarding control
+- **Navigation bar**: `src/components/Navbar.jsx` - Responsive nav with React Router Links
 - **Onboarding**: `src/pages/employé/Onboarding.jsx` - 8-step flow with localStorage
-- **Check-in flow**: `src/pages/employé/Checkin.jsx`, `CheckinStep2.jsx`, `CheckinStep3.jsx`
+- **Home page (unified)**: `src/pages/employé/HomeEmployee.jsx` - Single component with locked/unlocked states based on check-in history
+- **Check-in flow**: `src/pages/employé/Checkin.jsx`, `CheckinStep2.jsx`, `CheckinStep3.jsx` - Multi-step mood tracking
+- **Feedbacks**: `src/pages/employé/FeedbacksEmployee.jsx` - Category cards with navigation
+- **Category detail**: `src/pages/employé/CategoryDetail.jsx` - Uses `useParams` to get category from URL
 - **Styling**: `src/styles.css` - CSS variables, common classes, gradient background
 - **Modal pattern**: `src/components/Modal.jsx` - Base implementation
 - **API integration**: `src/services/apiClient.js` - Fetch wrapper
 - **Chart example**: `src/components/MoodTrendChart.jsx` - Chart.js with gradients
-- **Navigation bar**: `src/components/Navbar.jsx` - Responsive nav with mobile menu
 
 ## Critical Constraints
 
 1. **French language only** for all UI text (buttons, labels, messages)
-2. **No react-router** - navigation is state-based via `setPage`
+2. **React Router v6** - Use `useNavigate()` for navigation, `<Link>` for links, `useParams()` for URL parameters
 3. **No TypeScript** - this is a JavaScript project
 4. **No CSS frameworks** (Tailwind, etc.) - uses vanilla CSS + variables
 5. **Always use `@/` import alias** for src imports
-6. **Base path**: Keep `base: '/HUMA-FRONTEND/'` in vite.config for GitHub Pages
+6. **Base path**: Keep conditional base path in vite.config (`process.env.VERCEL ? '/' : '/HUMA-FRONTEND/'`)
 7. **Chart.js registration**: Always register components before use
+
+## Navigation Examples
+
+### Programmatic Navigation
+```javascript
+import { useNavigate } from 'react-router-dom'
+
+function MyComponent() {
+  const navigate = useNavigate()
+
+  const handleClick = () => {
+    navigate('/feedbacks')  // Navigate to feedbacks page
+    navigate('/category/Reconnaissance')  // Navigate with parameter
+  }
+}
+```
+
+### Link Navigation
+```javascript
+import { Link } from 'react-router-dom'
+
+<Link to="/moi">Mon profil</Link>
+<Link to="/feedbacks">Mes feedbacks</Link>
+```
+
+### Access URL Parameters
+```javascript
+import { useParams } from 'react-router-dom'
+
+function CategoryDetail() {
+  const { categoryId } = useParams()
+  const categoryName = decodeURIComponent(categoryId)
+  // Use categoryName...
+}
+```

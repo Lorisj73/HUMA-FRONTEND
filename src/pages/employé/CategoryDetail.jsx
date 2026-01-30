@@ -1,6 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
 
-export default function CategoryDetail({ category, onNavigate }) {
+export default function CategoryDetail() {
+  const navigate = useNavigate()
+  const { categoryId } = useParams()
+
+  // Décoder le nom de la catégorie depuis l'URL
+  const category = categoryId ? { name: decodeURIComponent(categoryId) } : null
   const [progress, setProgress] = useState(50)
   const [active, setActive] = useState(0)
   const [isDown, setIsDown] = useState(false)
@@ -162,7 +168,7 @@ export default function CategoryDetail({ category, onNavigate }) {
         WebkitBackdropFilter: 'blur(10px)'
       }}>
         <button
-          onClick={() => onNavigate('Feedbacks')}
+          onClick={() => navigate('/feedbacks')}
           style={{
             background: 'rgba(255, 255, 255, 0.9)',
             border: '1px solid rgba(0,0,0,0.1)',
