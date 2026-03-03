@@ -1,5 +1,6 @@
 import LockIcon from '@/components/LockIcon'
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Orage from '@/media/logo_meteo/Orage.png'
 import Pluvieux from '@/media/logo_meteo/Pluvieux.png'
 import Nuageux from '@/media/logo_meteo/Nuageux.png'
@@ -8,19 +9,86 @@ import Soleil from '@/media/logo_meteo/Soleil.png'
 import TeamScoreCard from '@/components/TeamScoreCard'
 import WeeklyChart from '@/components/WeeklyChart'
 import MoodRevealCard from '@/components/MoodRevealCard'
+import { checkTodayStatus, getCheckinHistory } from '../../services/checkinService'
+import { getTeamStats } from '../../services/teamService'
 
 export default function HomeEmployee() {
+  const navigate = useNavigate()
   const [lastCheckin, setLastCheckin] = useState(null)
   const [checkinHistory, setCheckinHistory] = useState([])
+  const [teamStats, setTeamStats] = useState(null)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isLoading, setIsLoading] = useState(true)
+  const [userFirstName, setUserFirstName] = useState('John')
+  const [hasCheckedInToday, setHasCheckedInToday] = useState(false)
 
   useEffect(() => {
-    const history = JSON.parse(localStorage.getItem('huma_checkin_history') || '[]')
-    setCheckinHistory(history)
-    if (history.length > 0) {
-      setLastCheckin(history[history.length - 1])
+    console.log('HomeEmployee mounted')
+    // Récupérer le prénom de l'utilisateur
+    const prenom = localStorage.getItem('huma_prenom')
+    console.log('Prénom récupéré:', prenom)
+    if (prenom) {
+      setUserFirstName(prenom)
     }
+    
+    loadData()
   }, [])
+
+  const loadData = async () => {
+    setIsLoading(true)
+    try {
+      console.log('Début du chargement des données...')
+      
+      // Charger le statut du check-in du jour
+      const todayStatus = await checkTodayStatus()
+      console.log('Check-in status du jour:', todayStatus)
+      
+      // Charger l'historique des check-ins (7 derniers jours)
+      const history = await getCheckinHistory(7)
+      console.log('Historique récupéré:', history)
+      
+      // Trier l'historique par date (du plus ancien au plus récent)
+      const sortedHistory = [...history].sort((a, b) => new Date(a.date) - new Date(b.date))
+      setCheckinHistory(sortedHistory)
+      
+      if (todayStatus && todayStatus.hasCheckedIn) {
+        console.log('Check-in effectué aujourd\'hui')
+        setHasCheckedInToday(true)
+        // Récupérer le check-in d'aujourd'hui depuis l'historique
+        const today = new Date().toISOString().split('T')[0]
+        const todayCheckin = sortedHistory.find(c => c.date && c.date.startsWith(today))
+        console.log('Check-in d\'aujourd\'hui:', todayCheckin)
+        if (todayCheckin) {
+          setLastCheckin(todayCheckin)
+        }
+      } else {
+        console.log('Pas de check-in aujourd\'hui')
+        setHasCheckedInToday(false)
+        setLastCheckin(null)
+      }
+
+      // Charger les stats de l'équipe
+      const stats = await getTeamStats()
+      console.log('Stats de l\'équipe:', stats)
+      setTeamStats(stats)
+    } catch (error) {
+      console.error('Erreur lors du chargement des données:', error)
+      // Fallback sur localStorage
+      const history = JSON.parse(localStorage.getItem('huma_checkin_history') || '[]')
+      setCheckinHistory(history)
+      if (history.length > 0) {
+        const today = new Date().toISOString().split('T')[0]
+        const todayCheckin = history.find(c => c.date && c.date.startsWith(today))
+        if (todayCheckin) {
+          setHasCheckedInToday(true)
+          setLastCheckin(todayCheckin)
+        }
+      }
+    } finally {
+      console.log('Fin du chargement')
+      setIsLoading(false)
+    }
+  }
 
   useEffect(() => {
     const handleResize = () => {
@@ -46,12 +114,41 @@ export default function HomeEmployee() {
     return 'très bien'
   }
 
-  const hasCheckedIn = lastCheckin !== null
-  const weekDays = ['L', 'M', 'M', 'J', 'V']
-  const completedDays = checkinHistory.length
+  // Afficher un indicateur de chargement pendant le chargement initial
+  if (isLoading) {
+    return (
+      <div className="container" style={{paddingTop: 40, textAlign: 'center'}}>
+        <div className="card" style={{padding: 40}}>
+          <div style={{fontSize: 16, color: '#757575'}}>Chargement...</div>
+        </div>
+      </div>
+    )
+  }
 
-  // Version unlocked si un check-in a été fait
-  if (hasCheckedIn) {
+  const weekDays = ['L', 'M', 'M', 'J', 'V']
+  
+  // Fonction pour obtenir les 5 derniers jours ouvrés avec leur statut
+  const getWeekdayCheckIns = () => {
+    const weekdayHistory = checkinHistory.filter(item => {
+      const date = new Date(item.date)
+      const dayOfWeek = date.getDay()
+      return dayOfWeek >= 1 && dayOfWeek <= 5 // Lundi à vendredi
+    }).slice(0, 5).reverse()
+    
+    return weekDays.map((day, index) => {
+      const checkin = weekdayHistory[index]
+      return {
+        day,
+        completed: checkin && checkin.status === 'completed',
+        isCurrent: index === weekdayHistory.length - 1 && checkin && checkin.status === 'completed'
+      }
+    })
+  }
+  
+  const weekdayCheckIns = getWeekdayCheckIns()
+
+  // Version unlocked si un check-in a été fait aujourd'hui
+  if (hasCheckedInToday && lastCheckin) {
     return (
       <div style={{ paddingBottom: '12px' }}>
         <div className="container" style={{maxWidth: isMobile ? '100%' : 1200}}>
@@ -121,7 +218,7 @@ export default function HomeEmployee() {
               filter: 'drop-shadow(0px 2px 1px rgba(12, 12, 13, 0.05))'
             }}>
               <div style={{flex:1}}>
-                <h1 style={{fontSize:18, margin:'0 0 2px', fontWeight:600}}>Bonjour John !</h1>
+                <h1 style={{fontSize:18, margin:'0 0 2px', fontWeight:600}}>Bonjour {userFirstName} !</h1>
                 <div style={{fontSize:13, color:'var(--muted)'}}>
                   Tu te sens <strong>{getMoodText(lastCheckin.mood)}</strong> aujourd'hui
                 </div>
@@ -150,40 +247,40 @@ export default function HomeEmployee() {
               />
 
               {/* Evolution sur la semaine */}
-              <WeeklyChart />
+              <WeeklyChart data={checkinHistory} period="Semaine" />
             </div>
 
             {/* Colonne droite */}
             <div style={{display:'flex', flexDirection:'column', gap:12}}>
 
               {/* Carte humeur du jour */}
-              <MoodRevealCard mood={getMoodText(lastCheckin.mood)} />
+              <MoodRevealCard mood={getMoodText(lastCheckin.moodValue)} />
 
               {/* Carte série de check-in */}
               <div className="card" style={{padding:'14px 18px'}}>
                 <h2 style={{fontSize:16, margin:'0 0 10px', fontWeight:600}}>Ta série de check-in</h2>
 
                 <div style={{display:'flex', gap:10, alignItems:'center', justifyContent:'center', marginBottom:10}}>
-                  {weekDays.map((day, index) => (
+                  {weekdayCheckIns.map((item, index) => (
                     <div key={index} style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6}}>
                       <div style={{
                         width:22,
                         height:22,
                         borderRadius:'50%',
-                        background: index < completedDays ? '#0748EA' : 'white',
-                        border: `1px solid ${index < completedDays ? '#0748EA' : '#D9D9D9'}`,
+                        background: item.completed ? '#0748EA' : 'white',
+                        border: `1px solid ${item.completed ? '#0748EA' : '#D9D9D9'}`,
                         display:'flex',
                         alignItems:'center',
                         justifyContent:'center',
                         filter: 'drop-shadow(0px 1px 2px rgba(12, 12, 13, 0.05))',
                         position:'relative'
                       }}>
-                        {index < completedDays && (
+                        {item.completed && (
                           <svg width="11" height="8" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M10.818 1.188L4.193 7.813L1.182 4.801" stroke="#C8D9FC" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
                         )}
-                        {index === completedDays && (
+                        {item.isCurrent && (
                           <div style={{
                             position:'absolute',
                             top:-16,
@@ -197,7 +294,7 @@ export default function HomeEmployee() {
                           }} />
                         )}
                       </div>
-                      <span style={{fontSize:12, color:'#757575'}}>{day}</span>
+                      <span style={{fontSize:12, color:'#757575'}}>{item.day}</span>
                     </div>
                   ))}
                 </div>
@@ -284,7 +381,7 @@ export default function HomeEmployee() {
             justifyContent:'center',
             filter: 'drop-shadow(0px 2px 1px rgba(12, 12, 13, 0.05))'
           }}>
-            <h1 style={{fontSize:22, margin:'0 0 4px', fontWeight:600}}>Bonjour John !</h1>
+            <h1 style={{fontSize:22, margin:'0 0 4px', fontWeight:600}}>Bonjour {userFirstName} !</h1>
             <div style={{fontSize:14, color:'var(--muted)'}}>Comment vas-tu aujourd'hui ? – Fais-le check-in avant ton départ d'équipe.</div>
           </div>
         </div>
@@ -393,103 +490,41 @@ export default function HomeEmployee() {
               <h2 style={{fontSize:18, margin:'0 0 12px', fontWeight:600}}>Ta série de check-in</h2>
 
               <div style={{display:'flex', gap:10, alignItems:'center', justifyContent:'center', marginBottom:12}}>
-                {/* Lundi */}
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6}}>
-                  <div style={{
-                    width:22,
-                    height:22,
-                    borderRadius:'50%',
-                    background:'#0748EA',
-                    border:'1px solid #0748EA',
-                    display:'flex',
-                    alignItems:'center',
-                    justifyContent:'center',
-                    filter: 'drop-shadow(0px 1px 2px rgba(12, 12, 13, 0.05))'
-                  }}>
-                    <svg width="11" height="8" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M10.818 1.188L4.193 7.813L1.182 4.801" stroke="#C8D9FC" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
+                {weekdayCheckIns.map((item, index) => (
+                  <div key={index} style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6, position:'relative'}}>
+                    {item.isCurrent && (
+                      <div style={{
+                        position:'absolute',
+                        top:-16,
+                        left:'50%',
+                        transform:'translateX(-50%)',
+                        width:0,
+                        height:0,
+                        borderLeft:'5px solid transparent',
+                        borderRight:'5px solid transparent',
+                        borderTop:'8px solid #0748EA'
+                      }} />
+                    )}
+                    <div style={{
+                      width:22,
+                      height:22,
+                      borderRadius:'50%',
+                      background: item.completed ? '#0748EA' : 'white',
+                      border: `1px solid ${item.completed ? '#0748EA' : '#D9D9D9'}`,
+                      display:'flex',
+                      alignItems:'center',
+                      justifyContent:'center',
+                      filter: 'drop-shadow(0px 1px 2px rgba(12, 12, 13, 0.05))'
+                    }}>
+                      {item.completed && (
+                        <svg width="11" height="8" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M10.818 1.188L4.193 7.813L1.182 4.801" stroke="#C8D9FC" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      )}
+                    </div>
+                    <span style={{fontSize:12, color:'#757575'}}>{item.day}</span>
                   </div>
-                  <span style={{fontSize:12, color:'#757575'}}>L</span>
-                </div>
-
-                {/* Mardi */}
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6}}>
-                  <div style={{
-                    width:22,
-                    height:22,
-                    borderRadius:'50%',
-                    background:'#0748EA',
-                    border:'1px solid #0748EA',
-                    display:'flex',
-                    alignItems:'center',
-                    justifyContent:'center',
-                    filter: 'drop-shadow(0px 1px 2px rgba(12, 12, 13, 0.05))'
-                  }}>
-                    <svg width="11" height="8" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M10.818 1.188L4.193 7.813L1.182 4.801" stroke="#C8D9FC" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <span style={{fontSize:12, color:'#757575'}}>M</span>
-                </div>
-
-                {/* Mercredi */}
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6}}>
-                  <div style={{
-                    width:22,
-                    height:22,
-                    borderRadius:'50%',
-                    background:'#0748EA',
-                    border:'1px solid #0748EA',
-                    display:'flex',
-                    alignItems:'center',
-                    justifyContent:'center',
-                    filter: 'drop-shadow(0px 1px 2px rgba(12, 12, 13, 0.05))'
-                  }}>
-                    <svg width="11" height="8" viewBox="0 0 12 9" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M10.818 1.188L4.193 7.813L1.182 4.801" stroke="#C8D9FC" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <span style={{fontSize:12, color:'#757575'}}>M</span>
-                </div>
-
-                {/* Jeudi - avec flèche */}
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6, position:'relative'}}>
-                  {/* Flèche pointant vers le bas */}
-                  <div style={{
-                    position:'absolute',
-                    top:-16,
-                    left:'50%',
-                    transform:'translateX(-50%)',
-                    width:0,
-                    height:0,
-                    borderLeft:'5px solid transparent',
-                    borderRight:'5px solid transparent',
-                    borderTop:'8px solid #0748EA'
-                  }} />
-                  <div style={{
-                    width:22,
-                    height:22,
-                    borderRadius:'50%',
-                    background:'white',
-                    border:'1px solid #D9D9D9',
-                    filter: 'drop-shadow(0px 1px 2px rgba(12, 12, 13, 0.05))'
-                  }} />
-                  <span style={{fontSize:12, color:'#757575'}}>J</span>
-                </div>
-
-                {/* Vendredi */}
-                <div style={{display:'flex', flexDirection:'column', alignItems:'center', gap:6}}>
-                  <div style={{
-                    width:22,
-                    height:22,
-                    borderRadius:'50%',
-                    background:'white',
-                    border:'1px solid #D9D9D9',
-                    filter: 'drop-shadow(0px 1px 2px rgba(12, 12, 13, 0.05))'
-                  }} />
-                  <span style={{fontSize:12, color:'#757575'}}>V</span>
-                </div>
+                ))}
               </div>
 
               <p style={{fontSize:12, color:'#757575', margin:0, lineHeight:1.4, textAlign:'center'}}>

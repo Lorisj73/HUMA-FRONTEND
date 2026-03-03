@@ -27,7 +27,13 @@ import CheckinStep3 from './pages/employé/CheckinStep3'
 // Composant Layout pour gérer la navbar et la logique onboarding
 function AppLayout() {
   const navigate = useNavigate()
-  const [showOnboarding, setShowOnboarding] = useState(true)
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    // Vérifier si l'onboarding a déjà été complété
+    const onboardingDone = localStorage.getItem('huma_onboarding_done')
+    const hasToken = localStorage.getItem('huma_auth_token')
+    // Afficher l'onboarding seulement si pas encore complété ET pas de token
+    return !(onboardingDone === '1' && hasToken)
+  })
   const [isManager, setIsManager] = useState(false)
 
   useEffect(() => {

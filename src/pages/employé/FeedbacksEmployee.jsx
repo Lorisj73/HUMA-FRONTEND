@@ -1,10 +1,60 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '@/components/Modal'
+import { createFeedback, getFeedbacks, getCategories } from '../../services/feedbackService'
 
 export default function FeedbacksEmployee() {
   const navigate = useNavigate()
   const [showModal, setShowModal] = useState(false)
+  const [feedbackCategory, setFeedbackCategory] = useState('')
+  const [feedbackText, setFeedbackText] = useState('')
+  const [solutionText, setSolutionText] = useState('')
+  const [isAnonymous, setIsAnonymous] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [feedbacksData, setFeedbacksData] = useState([])
+
+  useEffect(() => {
+    loadFeedbacks()
+  }, [])
+
+  const loadFeedbacks = async () => {
+    try {
+      const feedbacks = await getFeedbacks()
+      setFeedbacksData(feedbacks)
+    } catch (error) {
+      console.error('Erreur lors du chargement des feedbacks:', error)
+    }
+  }
+
+  const handleSubmitFeedback = async () => {
+    if (!feedbackCategory || !feedbackText.trim()) {
+      setError('Veuillez renseigner la catégorie et votre feedback')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      await createFeedback(feedbackCategory, feedbackText.trim(), solutionText.trim(), isAnonymous)
+      
+      // Réinitialiser le formulaire
+      setFeedbackCategory('')
+      setFeedbackText('')
+      setSolutionText('')
+      setIsAnonymous(true)
+      setShowModal(false)
+      
+      // Recharger les feedbacks
+      await loadFeedbacks()
+    } catch (err) {
+      console.error('Erreur lors de l\'envoi du feedback:', err)
+      setError('Impossible d\'envoyer votre feedback. Veuillez réessayer.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   // Données des catégories avec leurs compteurs
   const categories = [
@@ -192,41 +242,59 @@ export default function FeedbacksEmployee() {
 
       {/* Modal pour nouveau feedback */}
       {showModal && (
-        <Modal open={showModal} onClose={() => setShowModal(false)}>
+        <Modal open={showModal} onClose={() => {
+          setShowModal(false)
+          setError('')
+          setFeedbackCategory('')
+          setFeedbackText('')
+          setSolutionText('')
+          setIsAnonymous(true)
+        }}>
           <h2 style={{fontSize:28, margin:'0 0 12px', fontWeight:700}}>Nouveau feedback</h2>
           <p style={{fontSize:14, color:'#6B7280', margin:'0 0 32px'}}>
-            Partage tes idées, suggestions ou préoccupations
+            Partage tes idées, suggestions ou préoccupations de manière anonyme
           </p>
           
           <form onSubmit={(e) => {
             e.preventDefault()
-            setShowModal(false)
+            handleSubmitFeedback()
           }}>
             <label style={{display:'block', marginBottom:24}}>
-              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'var(--text)'}}>Catégorie</div>
-              <select style={{
-                width:'100%',
-                padding:'14px',
-                fontSize:15,
-                border:'1px solid var(--border)',
-                borderRadius:8,
-                background:'var(--card)',
-                color:'var(--text)',
-                cursor:'pointer',
-                outline:'none'
-              }}>
-                <option>Charge / Rythme</option>
-                <option>Relations / Ambiance</option>
-                <option>Organisation / Clarté</option>
-                <option>Reconnaissance</option>
-                <option>Équilibre vie pro / perso</option>
-                <option>Locaux / Matériel</option>
+              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'var(--text)'}}>
+                Catégorie <span style={{color:'#EF4444'}}>*</span>
+              </div>
+              <select 
+                value={feedbackCategory}
+                onChange={(e) => setFeedbackCategory(e.target.value)}
+                required
+                disabled={isLoading}
+                style={{
+                  width:'100%',
+                  padding:'14px',
+                  fontSize:15,
+                  border:'1px solid var(--border)',
+                  borderRadius:8,
+                  background:'var(--card)',
+                  color:'var(--text)',
+                  cursor:'pointer',
+                  outline:'none'
+                }}>
+                <option value="">Sélectionner une catégorie</option>
+                {getCategories().map(cat => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
               </select>
             </label>
 
-            <label style={{display:'block', marginBottom:32}}>
-              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'var(--text)'}}>Ton feedback</div>
+            <label style={{display:'block', marginBottom:24}}>
+              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'var(--text)'}}>
+                Ton feedback <span style={{color:'#EF4444'}}>*</span>
+              </div>
               <textarea 
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                required
+                disabled={isLoading}
                 style={{
                   width:'100%',
                   padding:'14px',
@@ -244,11 +312,67 @@ export default function FeedbacksEmployee() {
               />
             </label>
 
+            <label style={{display:'block', marginBottom:24}}>
+              <div style={{marginBottom:10, fontSize:14, fontWeight:600, color:'var(--text)'}}>
+                Ta suggestion (optionnel)
+              </div>
+              <textarea 
+                value={solutionText}
+                onChange={(e) => setSolutionText(e.target.value)}
+                disabled={isLoading}
+                style={{
+                  width:'100%',
+                  padding:'14px',
+                  fontSize:15,
+                  border:'1px solid var(--border)',
+                  borderRadius:8,
+                  background:'var(--card)',
+                  color:'var(--text)',
+                  resize:'vertical',
+                  minHeight:100,
+                  outline:'none',
+                  fontFamily:'inherit'
+                }}
+                placeholder="Propose une solution ou une idée d'amélioration..."
+              />
+            </label>
+
+            <label style={{display:'flex', alignItems:'center', gap:12, marginBottom:32, cursor:'pointer'}}>
+              <input 
+                type="checkbox"
+                checked={isAnonymous}
+                onChange={(e) => setIsAnonymous(e.target.checked)}
+                disabled={isLoading}
+                style={{width:18, height:18, cursor:'pointer'}}
+              />
+              <span style={{fontSize:14, fontWeight:500, color:'var(--text)'}}>
+                Envoyer de manière anonyme (recommandé)
+              </span>
+            </label>
+
+            {error && (
+              <div style={{
+                marginBottom: 16,
+                padding: '12px 16px',
+                background: '#FFF0F0',
+                border: '1px solid #FFB3B3',
+                borderRadius: 8,
+                color: '#D32F2F',
+                fontSize: 14
+              }}>
+                {error}
+              </div>
+            )}
+
             <div style={{display:'flex', gap:12, justifyContent:'flex-end'}}>
               <button 
                 type="button" 
                 className="btn"
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false)
+                  setError('')
+                }}
+                disabled={isLoading}
                 style={{
                   padding:'12px 24px',
                   fontSize:15,
@@ -257,7 +381,7 @@ export default function FeedbacksEmployee() {
                   border:'1px solid var(--border)',
                   background:'var(--card)',
                   color:'var(--text)',
-                  cursor:'pointer'
+                  cursor: isLoading ? 'not-allowed' : 'pointer'
                 }}
               >
                 Annuler
@@ -265,19 +389,20 @@ export default function FeedbacksEmployee() {
               <button 
                 type="submit" 
                 className="btn primary"
+                disabled={isLoading || !feedbackCategory || !feedbackText.trim()}
                 style={{
                   padding:'12px 24px',
                   fontSize:15,
                   fontWeight:600,
                   borderRadius:8,
                   border:'none',
-                  background:'#2563EB',
+                  background: (isLoading || !feedbackCategory || !feedbackText.trim()) ? '#D9D9D9' : '#2563EB',
                   color:'white',
-                  cursor:'pointer',
+                  cursor: (isLoading || !feedbackCategory || !feedbackText.trim()) ? 'not-allowed' : 'pointer',
                   boxShadow:'0 2px 8px rgba(37, 99, 235, 0.2)'
                 }}
               >
-                Envoyer
+                {isLoading ? 'Envoi...' : 'Envoyer'}
               </button>
             </div>
           </form>

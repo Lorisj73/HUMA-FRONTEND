@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import logoWelcome from '../../media/logo_welcome.png'
+import { login } from '../../services/authService'
+import { updateUserInfo, updateOnboarding } from '../../services/userService'
 
 // Background SVG component
 function OnboardingBackground() {
@@ -76,29 +78,143 @@ function Dots({ step, total }){
 
 export default function OnboardingEmployee({ onDone }) {
   const [step, setStep] = useState(0)
+  const [email, setEmail] = useState('')
   const [prenom, setPrenom] = useState('')
   const [nom, setNom] = useState('')
   const [isManager, setIsManager] = useState(false)
   const [motivation, setMotivation] = useState(null)
   const [environnementTravail, setEnvironnementTravail] = useState(null)
   const [energieSources, setEnergieSources] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(()=>{
     // Avoid scrolling while onboarding? Could add logic later.
   },[])
 
-  const next = () => {
+  const handleLogin = async () => {
+    if (!email || !email.trim()) {
+      setError('Veuillez entrer votre email')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const response = await login(email.trim())
+      console.log('Réponse login complète:', response)
+      
+      // Vérifier si l'onboarding est déjà complété
+      if (response.user && response.user.onboardingCompleted) {
+        console.log('Onboarding déjà complété, passage au dashboard')
+        // Sauvegarder les infos utilisateur
+        if (response.user.firstName) localStorage.setItem('huma_prenom', response.user.firstName)
+        if (response.user.lastName) localStorage.setItem('huma_nom', response.user.lastName)
+        if (response.user.isManager !== undefined) {
+          localStorage.setItem('huma_is_manager', response.user.isManager ? '1' : '0')
+        }
+        localStorage.setItem('huma_onboarding_done', '1')
+        
+        // Terminer l'onboarding directement
+        onDone?.()
+        return
+      }
+      
+      // Vérifier si l'utilisateur a déjà un firstName et lastName
+      if (response.user && response.user.firstName && response.user.lastName) {
+        // L'utilisateur a déjà ces informations, les sauvegarder et passer directement à l'étape 3
+        setPrenom(response.user.firstName)
+        setNom(response.user.lastName)
+        localStorage.setItem('huma_prenom', response.user.firstName)
+        localStorage.setItem('huma_nom', response.user.lastName)
+        
+        // Vérifier aussi si le rôle manager est déjà défini
+        if (response.user.isManager !== undefined && response.user.isManager !== null) {
+          setIsManager(response.user.isManager)
+          localStorage.setItem('huma_is_manager', response.user.isManager ? '1' : '0')
+          // Si tout est déjà rempli, passer directement aux questions d'onboarding (étape 4)
+          setStep(4)
+        } else {
+          // Sinon, passer à l'étape 3 pour demander le rôle
+          setStep(3)
+        }
+      } else {
+        // L'utilisateur n'a pas encore ces infos, passer à l'étape 2 pour les demander
+        setStep(2)
+      }
+    } catch (err) {
+      console.error('Erreur de connexion:', err)
+      setError('Impossible de se connecter. Veuillez réessayer.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const next = async () => {
+    if(step === 1) {
+      // L'utilisateur clique sur "Se connecter"
+      await handleLogin()
+      return
+    }
+
+    if(step === 2) {
+      // Envoi des infos nom/prénom à l'API
+      if (!prenom.trim() || !nom.trim()) {
+        setError('Veuillez renseigner votre nom et prénom')
+        return
+      }
+
+      setIsLoading(true)
+      setError('')
+      try {
+        await updateUserInfo(prenom.trim(), nom.trim())
+        localStorage.setItem('huma_prenom', prenom.trim())
+        localStorage.setItem('huma_nom', nom.trim())
+        localStorage.setItem('huma_is_manager', isManager ? '1' : '0')
+        setStep(s => s + 1)
+      } catch (err) {
+        console.error('Erreur lors de la mise à jour du profil:', err)
+        setError('Impossible de sauvegarder votre profil. Veuillez réessayer.')
+      } finally {
+        setIsLoading(false)
+      }
+      return
+    }
+
     if(step < 7) {
       setStep(s => s+1)
     } else {
-      localStorage.setItem('huma_prenom', prenom.trim())
-      localStorage.setItem('huma_nom', nom.trim())
-      localStorage.setItem('huma_is_manager', isManager ? '1' : '0')
-      localStorage.setItem('huma_onboarding_done','1')
-      if(motivation) localStorage.setItem('huma_motivation', motivation)
-      if(environnementTravail) localStorage.setItem('huma_environnement_travail', environnementTravail)
-      if(energieSources) localStorage.setItem('huma_energie_sources', energieSources)
-      onDone?.()
+      // Dernière étape : envoi des données d'onboarding à l'API
+      setIsLoading(true)
+      setError('')
+
+      try {
+        const onboardingData = {
+          workStyle: environnementTravail,
+          motivationType: motivation,
+          stressSource: energieSources
+        }
+
+        await updateOnboarding(onboardingData)
+
+        // Sauvegarder également dans localStorage
+        localStorage.setItem('huma_onboarding_done','1')
+        if(motivation) localStorage.setItem('huma_motivation', motivation)
+        if(environnementTravail) localStorage.setItem('huma_environnement_travail', environnementTravail)
+        if(energieSources) localStorage.setItem('huma_energie_sources', energieSources)
+
+        onDone?.()
+      } catch (err) {
+        console.error('Erreur lors de la sauvegarde de l\'onboarding:', err)
+        setError('Impossible de sauvegarder vos préférences. Veuillez réessayer.')
+        // Continuer quand même pour ne pas bloquer l'utilisateur
+        setTimeout(() => {
+          onDone?.()
+        }, 2000)
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -270,6 +386,9 @@ export default function OnboardingEmployee({ onDone }) {
                   <input 
                     type="email" 
                     placeholder="Entrez ton adresse e-mail professionnelle"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
                     style={{
                       width: '100%',
                       padding: '12px 16px 12px 44px',
@@ -312,26 +431,49 @@ export default function OnboardingEmployee({ onDone }) {
                 </label>
               </div>
 
+              {error && (
+                <div style={{
+                  marginBottom: 16,
+                  padding: '12px 16px',
+                  background: '#FFF0F0',
+                  border: '1px solid #FFB3B3',
+                  borderRadius: 8,
+                  color: '#D32F2F',
+                  fontSize: 14
+                }}>
+                  {error}
+                </div>
+              )}
+
               <button 
                 onClick={next}
+                disabled={!email.trim() || isLoading}
                 style={{
                   width: '100%',
-                  background: '#0748EA',
+                  background: (!email.trim() || isLoading) ? '#D9D9D9' : '#0748EA',
                   color: 'white',
                   padding: '14px 32px',
                   fontSize: 16,
                   fontWeight: 500,
                   border: 'none',
                   borderRadius: 8,
-                  cursor: 'pointer',
+                  cursor: (!email.trim() || isLoading) ? 'not-allowed' : 'pointer',
                   boxShadow: '0px 4px 8px rgba(7, 72, 234, 0.2)',
                   transition: 'all 0.2s',
                   marginBottom: 24
                 }}
-                onMouseOver={(e) => e.target.style.background = '#0536C7'}
-                onMouseOut={(e) => e.target.style.background = '#0748EA'}
+                onMouseOver={(e) => {
+                  if (!(!email.trim() || isLoading)) {
+                    e.target.style.background = '#0536C7'
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!(!email.trim() || isLoading)) {
+                    e.target.style.background = '#0748EA'
+                  }
+                }}
               >
-                Se connecter
+                {isLoading ? 'Connexion...' : 'Se connecter'}
               </button>
 
               <div style={{
@@ -534,34 +676,48 @@ export default function OnboardingEmployee({ onDone }) {
                 </div>
               </div>
 
+              {error && (
+                <div style={{
+                  marginBottom: 16,
+                  padding: '12px 16px',
+                  background: '#FFF0F0',
+                  border: '1px solid #FFB3B3',
+                  borderRadius: 8,
+                  color: '#D32F2F',
+                  fontSize: 14
+                }}>
+                  {error}
+                </div>
+              )}
+
               <button 
                 onClick={next}
-                disabled={!prenom.trim() || !nom.trim()}
+                disabled={!prenom.trim() || !nom.trim() || isLoading}
                 style={{
                   width: '100%',
-                  background: (!prenom.trim() || !nom.trim()) ? '#D9D9D9' : '#0748EA',
+                  background: (!prenom.trim() || !nom.trim() || isLoading) ? '#D9D9D9' : '#0748EA',
                   color: 'white',
                   padding: '14px 32px',
                   fontSize: 16,
                   fontWeight: 500,
                   border: 'none',
                   borderRadius: 8,
-                  cursor: (!prenom.trim() || !nom.trim()) ? 'not-allowed' : 'pointer',
-                  boxShadow: (!prenom.trim() || !nom.trim()) ? 'none' : '0px 4px 8px rgba(7, 72, 234, 0.2)',
+                  cursor: (!prenom.trim() || !nom.trim() || isLoading) ? 'not-allowed' : 'pointer',
+                  boxShadow: (!prenom.trim() || !nom.trim() || isLoading) ? 'none' : '0px 4px 8px rgba(7, 72, 234, 0.2)',
                   transition: 'all 0.2s'
                 }}
                 onMouseOver={(e) => {
-                  if(prenom.trim() && nom.trim()) {
+                  if(prenom.trim() && nom.trim() && !isLoading) {
                     e.target.style.background = '#0536C7'
                   }
                 }}
                 onMouseOut={(e) => {
-                  if(prenom.trim() && nom.trim()) {
+                  if(prenom.trim() && nom.trim() && !isLoading) {
                     e.target.style.background = '#0748EA'
                   }
                 }}
               >
-                Continuer
+                {isLoading ? 'Enregistrement...' : 'Continuer'}
               </button>
             </div>
           </div>

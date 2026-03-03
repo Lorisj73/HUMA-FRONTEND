@@ -1,9 +1,35 @@
 import { useState, useEffect } from 'react'
 import Soleil from '@/media/logo_meteo/Soleil.png'
+import SoleilNuageux from '@/media/logo_meteo/Soleil_nuageux.png'
+import Nuageux from '@/media/logo_meteo/Nuageux.png'
+import Pluvieux from '@/media/logo_meteo/Pluvieux.png'
+import Orage from '@/media/logo_meteo/Orage.png'
+import WeeklyChart from '@/components/WeeklyChart'
+import { getCheckinHistory, getWeeklySummary, getWeeklyFactors } from '../../services/checkinService'
 
 export default function MeEmployee() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [selectedPeriod, setSelectedPeriod] = useState('Semaine')
+  const [isLoading, setIsLoading] = useState(true)
+  
+  // États pour les données
+  const [checkinHistory, setCheckinHistory] = useState([])
+  const [chartData, setChartData] = useState([]) // Données groupées pour le graphique
+  const [weeklyStats, setWeeklyStats] = useState(null)
+  const [avgMood, setAvgMood] = useState(0)
+  const [participation, setParticipation] = useState(0)
+  const [moodDistribution, setMoodDistribution] = useState({
+    excellent: 0,
+    good: 0,
+    difficult: 0
+  })
+  const [influenceFactors, setInfluenceFactors] = useState([
+    { label: 'Épanoui', value: 0 },
+    { label: 'Serein', value: 0 },
+    { label: 'Mitigé', value: 0 },
+    { label: 'Sous tension', value: 0 },
+    { label: 'Éprouvé', value: 0 }
+  ])
 
   useEffect(() => {
     const handleResize = () => {
@@ -13,36 +39,195 @@ export default function MeEmployee() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Données en dur pour le développement
-  const weeklyScore = 7.2
-  const maxScore = 10
-  const excellentDays = 1
-  const goodDays = 3
-  const difficultDays = 1
+  useEffect(() => {
+    loadData()
+  }, [selectedPeriod])
 
-  const avgMood = 7.2
-  const participation = 4
-  const totalDays = 5
+  // Fonction pour regrouper les données selon la période
+  const groupDataByPeriod = (data, period) => {
+    // Trier les données par date (du plus ancien au plus récent)
+    const sortedData = [...data].sort((a, b) => new Date(a.date) - new Date(b.date))
+    
+    if (period === 'Semaine') {
+      // Pour la semaine, garder les 5 derniers jours ouvrés
+      return sortedData.slice(-5)
+    } else if (period === 'Mois') {
+      // Pour le mois, regrouper par semaine (environ 4-5 points)
+      const grouped = []
+      const weekGroups = {}
+      
+      sortedData.forEach(item => {
+        const date = new Date(item.date)
+        // Obtenir le numéro de semaine dans le mois (0-4)
+        const weekOfMonth = Math.floor((date.getDate() - 1) / 7)
+        
+        if (!weekGroups[weekOfMonth]) {
+          weekGroups[weekOfMonth] = []
+        }
+        weekGroups[weekOfMonth].push(item)
+      })
+      
+      // Calculer la moyenne pour chaque semaine (dans l'ordre)
+      Object.keys(weekGroups).sort((a, b) => Number(a) - Number(b)).forEach(week => {
+        const items = weekGroups[week]
+        const completedItems = items.filter(i => i.status === 'completed')
+        
+        if (completedItems.length > 0) {
+          const avgMoodValue = completedItems.reduce((sum, i) => sum + i.moodValue, 0) / completedItems.length
+          grouped.push({
+            date: items[0].date,
+            status: 'completed',
+            moodValue: Math.round(avgMoodValue)
+          })
+        } else if (items.length > 0) {
+          grouped.push(items[0])
+        }
+      })
+      
+      return grouped
+    } else {
+      // Pour l'année, regrouper par mois (12 points)
+      const grouped = []
+      const monthGroups = {}
+      
+      sortedData.forEach(item => {
+        const date = new Date(item.date)
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        
+        if (!monthGroups[monthKey]) {
+          monthGroups[monthKey] = []
+        }
+        monthGroups[monthKey].push(item)
+      })
+      
+      // Calculer la moyenne pour chaque mois (dans l'ordre)
+      Object.keys(monthGroups).sort().forEach(month => {
+        const items = monthGroups[month]
+        const completedItems = items.filter(i => i.status === 'completed')
+        
+        if (completedItems.length > 0) {
+          const avgMoodValue = completedItems.reduce((sum, i) => sum + i.moodValue, 0) / completedItems.length
+          grouped.push({
+            date: items[0].date,
+            status: 'completed',
+            moodValue: Math.round(avgMoodValue)
+          })
+        } else if (items.length > 0) {
+          grouped.push(items[0])
+        }
+      })
+      
+      return grouped
+    }
+  }
+
+  const loadData = async () => {
+    setIsLoading(true)
+    try {
+      // Déterminer le nombre de jours selon la période
+      const days = selectedPeriod === 'Semaine' ? 7 : selectedPeriod === 'Mois' ? 30 : 365
+      
+      // Récupérer l'historique
+      const history = await getCheckinHistory(days)
+      
+      // Filtrer pour ne garder que les jours de semaine (lundi-vendredi)
+      const weekdayHistory = history.filter(item => {
+        const date = new Date(item.date)
+        const dayOfWeek = date.getDay()
+        return dayOfWeek >= 1 && dayOfWeek <= 5
+      })
+      
+      setCheckinHistory(weekdayHistory)
+      
+      // Grouper les données pour le graphique selon la période
+      const grouped = groupDataByPeriod(weekdayHistory, selectedPeriod)
+      setChartData(grouped)
+      
+      // Calculer les statistiques
+      const completedCheckins = weekdayHistory.filter(c => c.status === 'completed')
+      
+      // Moyenne d'humeur
+      if (completedCheckins.length > 0) {
+        const sum = completedCheckins.reduce((acc, c) => acc + (c.moodValue || 0), 0)
+        setAvgMood(sum / completedCheckins.length)
+      }
+      
+      // Participation (jours ouvrés avec check-in)
+      const totalWeekdays = selectedPeriod === 'Semaine' ? 5 : weekdayHistory.length
+      setParticipation(completedCheckins.length)
+      
+      // Distribution des humeurs (excellent > 80, good 60-80, difficult < 60)
+      const excellent = completedCheckins.filter(c => c.moodValue > 80).length
+      const good = completedCheckins.filter(c => c.moodValue >= 60 && c.moodValue <= 80).length
+      const difficult = completedCheckins.filter(c => c.moodValue < 60).length
+      
+      setMoodDistribution({ excellent, good, difficult })
+      
+      // Calculer la distribution des facteurs d'influence
+      const total = completedCheckins.length
+      if (total > 0) {
+        const epanoui = completedCheckins.filter(c => c.moodValue > 80).length
+        const serein = completedCheckins.filter(c => c.moodValue >= 60 && c.moodValue <= 80).length
+        const mitige = completedCheckins.filter(c => c.moodValue >= 40 && c.moodValue < 60).length
+        const sousTension = completedCheckins.filter(c => c.moodValue >= 20 && c.moodValue < 40).length
+        const eprouve = completedCheckins.filter(c => c.moodValue < 20).length
+        
+        setInfluenceFactors([
+          { label: 'Épanoui', value: Math.round((epanoui / total) * 100) },
+          { label: 'Serein', value: Math.round((serein / total) * 100) },
+          { label: 'Mitigé', value: Math.round((mitige / total) * 100) },
+          { label: 'Sous tension', value: Math.round((sousTension / total) * 100) },
+          { label: 'Éprouvé', value: Math.round((eprouve / total) * 100) }
+        ])
+      }
+      
+    } catch (error) {
+      console.error('Erreur lors du chargement des données:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const getMoodIcon = (moodValue) => {
+    if (moodValue > 80) return Soleil
+    if (moodValue >= 60) return SoleilNuageux
+    if (moodValue >= 40) return Nuageux
+    if (moodValue >= 20) return Pluvieux
+    return Orage
+  }
+
+  // Calculer les valeurs dérivées
+  const weeklyScore = avgMood / 10
+  const maxScore = 10
+  const excellentDays = moodDistribution.excellent
+  const goodDays = moodDistribution.good
+  const difficultDays = moodDistribution.difficult
+  const totalDays = selectedPeriod === 'Semaine' ? 5 : selectedPeriod === 'Mois' ? 22 : 252
   const level = 5
   const xp = 350
   const maxXp = 500
 
   // Calculer le pourcentage pour la jauge
-  const gaugePercentage = weeklyScore / maxScore
+  const gaugePercentage = avgMood / 100
   const radius = 60
   const circumference = 2 * Math.PI * radius
   const arcLength = circumference * 0.5
   const filledArcLength = arcLength * gaugePercentage
 
-  const influenceFactors = [
-    { label: 'Épanoui', value: 0 },
-    { label: 'Serein', value: 0 },
-    { label: 'Mitigé', value: 0 },
-    { label: 'Sous tension', value: 0 },
-    { label: 'Éprouvé', value: 0 }
-  ]
-
   const tags = ['Charge/Rythme', 'Relations/Ambiance', 'Sens/Motivation', 'Organisation/Clarté', 'Reconnaissance', 'Équilibre pro/perso']
+  
+  // Obtenir l'icône météo basée sur la moyenne
+  const currentMoodIcon = getMoodIcon(avgMood)
+
+  if (isLoading) {
+    return (
+      <div className="container" style={{paddingTop: 40, textAlign: 'center'}}>
+        <div className="card" style={{padding: 40}}>
+          <div style={{fontSize: 16, color: '#757575'}}>Chargement...</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ paddingBottom: '12px' }}>
@@ -84,7 +269,7 @@ export default function MeEmployee() {
             justifyContent: 'center',
             boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
           }}>
-            <img src={Soleil} alt="Météo" style={{ width: '50px', height: '50px' }} />
+            <img src={currentMoodIcon} alt="Météo" style={{ width: '50px', height: '50px' }} />
           </div>
         </div>
 
@@ -152,49 +337,9 @@ export default function MeEmployee() {
               ))}
             </div>
 
-            {/* Graphique simplifié */}
-            <div style={{ position: 'relative', height: 200, background: 'var(--bg)', borderRadius: 12, padding: 20 }}>
-              <svg width="100%" height="160" viewBox="0 0 500 160">
-                {/* Grille */}
-                {[0, 1, 2, 3, 4].map(i => (
-                  <line key={i} x1="0" y1={i * 40} x2="500" y2={i * 40} stroke="#D9D9D9" strokeWidth="0.5" />
-                ))}
-                {/* Courbe */}
-                <path d="M 50,80 Q 150,60 250,100 T 450,80" fill="url(#gradient)" opacity="0.3" />
-                <path d="M 50,80 Q 150,60 250,100 T 450,80" fill="none" stroke="#0748EA" strokeWidth="3" />
-                {/* Point */}
-                <circle cx="450" cy="80" r="6" fill="#1E1E1E" />
-                {/* Ligne pointillée */}
-                <line x1="450" y1="80" x2="500" y2="80" stroke="#303030" strokeWidth="2" strokeDasharray="4 4" />
-                <defs>
-                  <linearGradient id="gradient" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="white" stopOpacity="0.3"/>
-                    <stop offset="100%" stopColor="#0748EA" stopOpacity="0.8"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-              {/* Labels des jours */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
-                {['L', 'M', 'M', 'J', 'V'].map((day, i) => (
-                  <div key={i}>{day}</div>
-                ))}
-              </div>
-              {/* Tooltip "Sous tension" */}
-              <div style={{
-                position: 'absolute',
-                top: 40,
-                left: '50%',
-                transform: 'translateX(-50%)',
-                background: 'var(--card)',
-                padding: '8px 12px',
-                borderRadius: 8,
-                boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-                border: '1px solid #D9D9D9',
-                fontSize: 12
-              }}>
-                <div style={{ fontWeight: 600, color: 'var(--text)' }}>Sous tension</div>
-                <div style={{ color: 'var(--muted)', fontSize: 10 }}>Charge/Rythme</div>
-              </div>
+            {/* Graphique WeeklyChart */}
+            <div style={{ marginBottom: 24 }}>
+              <WeeklyChart data={chartData} period={selectedPeriod} />
             </div>
 
             {/* Stats : Jours */}
@@ -280,7 +425,7 @@ export default function MeEmployee() {
               }}>★</div>
               <div>
                 <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 4 }}>Humeur moyenne</div>
-                <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>{avgMood.toFixed(1).replace('.', ',')}/10</div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: 'var(--text)' }}>{(avgMood / 10).toFixed(1).replace('.', ',')}/10</div>
               </div>
             </div>
             <div style={{ fontSize: 14, color: 'var(--text)' }}>+0,8 vs semaine dernière</div>

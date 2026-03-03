@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { createCheckin } from '../../services/checkinService'
 
 // Import des images météo
 import Orage from '@/media/logo_meteo/Orage.png'
@@ -13,6 +14,8 @@ export default function CheckinStep3() {
   const [comment, setComment] = useState('')
   const [showSuggestion, setShowSuggestion] = useState(true)
   const [weatherImage, setWeatherImage] = useState(Soleil)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   // Load data from previous steps
   useEffect(() => {
@@ -28,15 +31,18 @@ export default function CheckinStep3() {
     }
   }, [])
 
-  const handleSubmit = () => {
-    // Save comment
+  const handleSubmit = async () => {
+    setIsLoading(true)
+    setError('')
+
+    // Save comment to localStorage (backup)
     localStorage.setItem('huma_checkin_comment', comment)
     
     // Get all check-in data
     const moodValue = localStorage.getItem('huma_checkin_mood')
     const selectedOptions = JSON.parse(localStorage.getItem('huma_checkin_options') || '[]')
     
-    // Save complete check-in to localStorage (for use when API is ready)
+    // Save complete check-in to localStorage (backup)
     const checkinData = {
       mood: parseInt(moodValue),
       options: selectedOptions,
@@ -44,20 +50,33 @@ export default function CheckinStep3() {
       timestamp: new Date().toISOString()
     }
     
-    // Save to history
+    // Save to history (backup)
     const checkinHistory = JSON.parse(localStorage.getItem('huma_checkin_history') || '[]')
     checkinHistory.push(checkinData)
     localStorage.setItem('huma_checkin_history', JSON.stringify(checkinHistory))
     
-    // Here you would submit to API
-    console.log('Check-in completed:', checkinData)
+    try {
+      // Submit to API
+      await createCheckin(parseInt(moodValue), selectedOptions, comment)
+      console.log('Check-in sauvegardé avec succès !')
 
-    // Clear temporary localStorage
-    localStorage.removeItem('huma_checkin_mood')
-    localStorage.removeItem('huma_checkin_options')
-    localStorage.removeItem('huma_checkin_comment')
+      // Clear temporary localStorage
+      localStorage.removeItem('huma_checkin_mood')
+      localStorage.removeItem('huma_checkin_options')
+      localStorage.removeItem('huma_checkin_comment')
 
-    navigate('/')
+      navigate('/')
+    } catch (err) {
+      console.error('Erreur lors de l\'envoi du check-in:', err)
+      setError('Impossible d\'enregistrer votre check-in. Vos données sont sauvegardées localement.')
+      
+      // Continue anyway to not block user (data is saved locally)
+      setTimeout(() => {
+        navigate('/')
+      }, 2000)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -264,22 +283,37 @@ export default function CheckinStep3() {
           </div>
         )}
 
+        {/* Error Message */}
+        {error && (
+          <div style={{
+            padding: '12px 16px',
+            background: '#FFF0F0',
+            border: '1px solid #FFB3B3',
+            borderRadius: 8,
+            color: '#D32F2F',
+            fontSize: 14
+          }}>
+            {error}
+          </div>
+        )}
+
         {/* Submit Button */}
         <button
           onClick={handleSubmit}
+          disabled={isLoading}
           style={{
-            backgroundColor: '#0748EA',
+            backgroundColor: isLoading ? '#D9D9D9' : '#0748EA',
             color: 'white',
             border: 'none',
             borderRadius: 6,
             padding: '14px 28px',
             fontSize: 14,
             fontWeight: 500,
-            cursor: 'pointer',
+            cursor: isLoading ? 'not-allowed' : 'pointer',
             marginTop: 8
           }}
         >
-          Enregistrer ma météo du jour
+          {isLoading ? 'Enregistrement...' : 'Enregistrer ma météo du jour'}
         </button>
 
         {/* Privacy Notice */}
