@@ -57,10 +57,12 @@ export async function createCheckin(moodValue, selectedOptions, comment = '') {
 // Vérifier si un check-in a été fait aujourd'hui
 export async function checkTodayStatus() {
   try {
+    console.log('📡 checkinService.checkTodayStatus - Appel API /checkins/today')
     const response = await api.get('/checkins/today')
+    console.log('✅ checkinService.checkTodayStatus - Réponse:', response)
     return response
   } catch (error) {
-    console.error('Erreur lors de la vérification du check-in du jour:', error)
+    console.error('❌ checkinService.checkTodayStatus - Erreur:', error)
     throw error
   }
 }
@@ -68,10 +70,12 @@ export async function checkTodayStatus() {
 // Récupérer l'historique des check-ins
 export async function getCheckinHistory(days = 30) {
   try {
+    console.log(`📡 checkinService.getCheckinHistory - Appel API /checkins/history?days=${days}`)
     const response = await api.get(`/checkins/history?days=${days}`)
+    console.log('✅ checkinService.getCheckinHistory - Réponse:', response)
     return response
   } catch (error) {
-    console.error('Erreur lors de la récupération de l\'historique:', error)
+    console.error('❌ checkinService.getCheckinHistory - Erreur:', error)
     throw error
   }
 }

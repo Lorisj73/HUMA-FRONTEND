@@ -23,25 +23,27 @@ export default function HomeEmployee() {
   const [hasCheckedInToday, setHasCheckedInToday] = useState(false)
 
   useEffect(() => {
-    console.log('HomeEmployee mounted')
+    console.log('🎬 HomeEmployee mounted - useEffect déclenché')
     // Récupérer le prénom de l'utilisateur
     const prenom = localStorage.getItem('huma_prenom')
-    console.log('Prénom récupéré:', prenom)
+    console.log('👤 Prénom récupéré:', prenom)
     if (prenom) {
       setUserFirstName(prenom)
     }
     
+    console.log('🔄 Lancement de loadData()...')
     loadData()
   }, [])
 
   const loadData = async () => {
+    console.log('🚀 HomeEmployee - Début du chargement des données...')
     setIsLoading(true)
     try {
-      console.log('Début du chargement des données...')
+      console.log('📡 Appel checkTodayStatus...')
       
       // Charger le statut du check-in du jour
       const todayStatus = await checkTodayStatus()
-      console.log('Check-in status du jour:', todayStatus)
+      console.log('✅ Check-in status du jour:', todayStatus)
       
       // Charger l'historique des check-ins (7 derniers jours)
       const history = await getCheckinHistory(7)
@@ -52,17 +54,32 @@ export default function HomeEmployee() {
       setCheckinHistory(sortedHistory)
       
       if (todayStatus && todayStatus.hasCheckedIn) {
-        console.log('Check-in effectué aujourd\'hui')
+        console.log('✅ Check-in effectué aujourd\'hui')
         setHasCheckedInToday(true)
         // Récupérer le check-in d'aujourd'hui depuis l'historique
         const today = new Date().toISOString().split('T')[0]
-        const todayCheckin = sortedHistory.find(c => c.date && c.date.startsWith(today))
-        console.log('Check-in d\'aujourd\'hui:', todayCheckin)
+        console.log('Date du jour:', today)
+        console.log('Historique complet:', sortedHistory)
+        const todayCheckin = sortedHistory.find(c => {
+          console.log('Vérification check-in:', c.date, 'starts with', today, '=', c.date && c.date.startsWith(today))
+          return c.date && c.date.startsWith(today)
+        })
+        console.log('✅ Check-in trouvé pour aujourd\'hui:', todayCheckin)
         if (todayCheckin) {
           setLastCheckin(todayCheckin)
+        } else {
+          // Fallback: créer un objet minimal si le check-in existe selon l'API mais n'est pas dans l'historique
+          console.warn('⚠️ Check-in existe selon l\'API mais non trouvé dans l\'historique')
+          const fallbackCheckin = {
+            date: today,
+            moodValue: 50,
+            mood: 50,
+            status: 'completed'
+          }
+          setLastCheckin(fallbackCheckin)
         }
       } else {
-        console.log('Pas de check-in aujourd\'hui')
+        console.log('❌ Pas de check-in aujourd\'hui')
         setHasCheckedInToday(false)
         setLastCheckin(null)
       }
@@ -72,7 +89,13 @@ export default function HomeEmployee() {
       console.log('Stats de l\'équipe:', stats)
       setTeamStats(stats)
     } catch (error) {
-      console.error('Erreur lors du chargement des données:', error)
+      console.error('❌ ERREUR lors du chargement des données:', error)
+      console.error('❌ Détails de l\'erreur:', error.message, error.stack)
+      
+      // Toujours définir hasCheckedInToday à false en cas d'erreur
+      setHasCheckedInToday(false)
+      setLastCheckin(null)
+      
       // Fallback sur localStorage
       const history = JSON.parse(localStorage.getItem('huma_checkin_history') || '[]')
       setCheckinHistory(history)
@@ -146,6 +169,100 @@ export default function HomeEmployee() {
   }
   
   const weekdayCheckIns = getWeekdayCheckIns()
+
+  // Calculer les données pour TeamScoreCard à partir des stats de l'équipe
+  const getTeamScoreData = () => {
+    if (!teamStats) {
+      return {
+        score: 0,
+        weatherValue: 0,
+        categories: [
+          { label: 'Épanoui', value: 0 },
+          { label: 'Serein', value: 0 },
+          { label: 'Mitigé', value: 0 }
+        ]
+      }
+    }
+
+    // Utiliser globalScore (0-100) et distribution depuis l'API
+    const globalScore = teamStats.globalScore || 0
+    const score = (globalScore / 10).toFixed(1) // Convertir 0-100 en 0-10
+    const distribution = teamStats.distribution || {}
+
+    // Calculer les catégories basées sur la distribution
+    // La distribution contient les dimensions (RELATIONS, CLARITY, etc.)
+    // On va les convertir en Épanoui/Serein/Mitigé selon leur valeur
+    
+    const totalCheckins = teamStats.totalCheckins || 0
+    
+    if (totalCheckins === 0 || globalScore === 0) {
+      return {
+        score: 0,
+        weatherValue: 0,
+        categories: [
+          { label: 'Épanoui', value: 0 },
+          { label: 'Serein', value: 0 },
+          { label: 'Mitigé', value: 0 }
+        ]
+      }
+    }
+
+    // Estimer les proportions basées sur le globalScore
+    let epanouiPercent, sereinPercent, mitigePercent
+    
+    if (globalScore > 80) {
+      // Score élevé : majorité épanoui
+      epanouiPercent = 70
+      sereinPercent = 25
+      mitigePercent = 5
+    } else if (globalScore > 60) {
+      // Score moyen : majorité serein
+      epanouiPercent = 30
+      sereinPercent = 55
+      mitigePercent = 15
+    } else if (globalScore > 40) {
+      // Score faible : équilibré
+      epanouiPercent = 20
+      sereinPercent = 40
+      mitigePercent = 40
+    } else {
+      // Score très faible : majorité mitigé
+      epanouiPercent = 10
+      sereinPercent = 30
+      mitigePercent = 60
+    }
+
+    return {
+      score: parseFloat(score),
+      weatherValue: globalScore,
+      categories: [
+        { label: 'Épanoui', value: epanouiPercent },
+        { label: 'Serein', value: sereinPercent },
+        { label: 'Mitigé', value: mitigePercent }
+      ]
+    }
+  }
+
+  const teamScoreData = getTeamScoreData()
+
+  // Afficher un état de chargement
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        minHeight: '50vh' 
+      }}>
+        <div style={{ 
+          fontSize: 16, 
+          color: 'var(--muted)' 
+        }}>
+          Chargement...
+        </div>
+      </div>
+    )
+  }
 
   // Version unlocked si un check-in a été fait aujourd'hui
   if (hasCheckedInToday && lastCheckin) {
@@ -236,14 +353,10 @@ export default function HomeEmployee() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', minWidth: 0 }}>
               {/* Score de l'équipe */}
               <TeamScoreCard
-                score={7.2}
+                score={teamScoreData.score}
                 maxScore={10}
-                weatherValue={85}
-                categories={[
-                  { label: 'Épanoui', value: 85 },
-                  { label: 'Serein', value: 75 },
-                  { label: 'Mitigé', value: 45 }
-                ]}
+                weatherValue={teamScoreData.weatherValue}
+                categories={teamScoreData.categories}
               />
 
               {/* Evolution sur la semaine */}

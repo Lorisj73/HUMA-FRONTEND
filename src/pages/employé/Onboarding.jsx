@@ -79,6 +79,8 @@ function Dots({ step, total }){
 export default function OnboardingEmployee({ onDone }) {
   const [step, setStep] = useState(0)
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [prenom, setPrenom] = useState('')
   const [nom, setNom] = useState('')
   const [isManager, setIsManager] = useState(false)
@@ -97,12 +99,16 @@ export default function OnboardingEmployee({ onDone }) {
       setError('Veuillez entrer votre email')
       return
     }
+    if (!password || !password.trim()) {
+      setError('Veuillez entrer votre mot de passe')
+      return
+    }
 
     setIsLoading(true)
     setError('')
 
     try {
-      const response = await login(email.trim())
+      const response = await login(email.trim(), password.trim())
       console.log('Réponse login complète:', response)
       
       // Vérifier si l'onboarding est déjà complété
@@ -111,9 +117,11 @@ export default function OnboardingEmployee({ onDone }) {
         // Sauvegarder les infos utilisateur
         if (response.user.firstName) localStorage.setItem('huma_prenom', response.user.firstName)
         if (response.user.lastName) localStorage.setItem('huma_nom', response.user.lastName)
-        if (response.user.isManager !== undefined) {
-          localStorage.setItem('huma_is_manager', response.user.isManager ? '1' : '0')
-        }
+        
+        // Stocker le rôle (depuis response.user.role ou isManager)
+        const isManager = response.user.role === 'manager' || response.user.isManager
+        localStorage.setItem('huma_is_manager', isManager ? '1' : '0')
+        
         localStorage.setItem('huma_onboarding_done', '1')
         
         // Terminer l'onboarding directement
@@ -130,9 +138,10 @@ export default function OnboardingEmployee({ onDone }) {
         localStorage.setItem('huma_nom', response.user.lastName)
         
         // Vérifier aussi si le rôle manager est déjà défini
-        if (response.user.isManager !== undefined && response.user.isManager !== null) {
-          setIsManager(response.user.isManager)
-          localStorage.setItem('huma_is_manager', response.user.isManager ? '1' : '0')
+        const isManagerValue = response.user.role === 'manager' || response.user.isManager
+        if (response.user.role || response.user.isManager !== undefined) {
+          setIsManager(isManagerValue)
+          localStorage.setItem('huma_is_manager', isManagerValue ? '1' : '0')
           // Si tout est déjà rempli, passer directement aux questions d'onboarding (étape 4)
           setStep(4)
         } else {
@@ -406,6 +415,76 @@ export default function OnboardingEmployee({ onDone }) {
                 </div>
               </div>
 
+              <div style={{textAlign: 'left', marginBottom: 24}}>
+                <label style={{
+                  display: 'block',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  marginBottom: 8,
+                  color: '#1E1E1E'
+                }}>
+                  Mot de passe
+                </label>
+                <div style={{position: 'relative'}}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{
+                    position: 'absolute',
+                    left: 16,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    pointerEvents: 'none'
+                  }}>
+                    <path d="M12 7V5C12 4.20435 11.6839 3.44129 11.1213 2.87868C10.5587 2.31607 9.79565 2 9 2H7C6.20435 2 5.44129 2.31607 4.87868 2.87868C4.31607 3.44129 4 4.20435 4 5V7M3 14H13C13.5304 14 14.0391 13.7893 14.4142 13.4142C14.7893 13.0391 15 12.5304 15 12V9C15 8.46957 14.7893 7.96086 14.4142 7.58579C14.0391 7.21071 13.5304 7 13 7H3C2.46957 7 1.96086 7.21071 1.58579 7.58579C1.21071 7.96086 1 8.46957 1 9V12C1 12.5304 1.21071 13.0391 1.58579 13.4142C1.96086 13.7893 2.46957 14 3 14Z" stroke="#757575" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <input 
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Entrez votre mot de passe"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    disabled={isLoading}
+                    style={{
+                      width: '100%',
+                      padding: '12px 44px 12px 44px',
+                      fontSize: 14,
+                      border: '1px solid #D9D9D9',
+                      borderRadius: 8,
+                      background: 'white',
+                      color: '#1E1E1E',
+                      outline: 'none',
+                      transition: 'border-color 0.2s'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0748EA'}
+                    onBlur={(e) => e.target.style.borderColor = '#D9D9D9'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: 16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    {showPassword ? (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M1 8C1 8 3.5 3 8 3C12.5 3 15 8 15 8C15 8 12.5 13 8 13C3.5 13 1 8 1 8Z" stroke="#757575" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="#757575" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M6.5 6.5L9.5 9.5M9.5 6.5L6.5 9.5M1 8C1 8 3.5 3 8 3C12.5 3 15 8 15 8C15 8 12.5 13 8 13C3.5 13 1 8 1 8Z" stroke="#757575" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </button>
+                </div>
+              </div>
+
               <div style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -447,28 +526,28 @@ export default function OnboardingEmployee({ onDone }) {
 
               <button 
                 onClick={next}
-                disabled={!email.trim() || isLoading}
+                disabled={!email.trim() || !password.trim() || isLoading}
                 style={{
                   width: '100%',
-                  background: (!email.trim() || isLoading) ? '#D9D9D9' : '#0748EA',
+                  background: (!email.trim() || !password.trim() || isLoading) ? '#D9D9D9' : '#0748EA',
                   color: 'white',
                   padding: '14px 32px',
                   fontSize: 16,
                   fontWeight: 500,
                   border: 'none',
                   borderRadius: 8,
-                  cursor: (!email.trim() || isLoading) ? 'not-allowed' : 'pointer',
+                  cursor: (!email.trim() || !password.trim() || isLoading) ? 'not-allowed' : 'pointer',
                   boxShadow: '0px 4px 8px rgba(7, 72, 234, 0.2)',
                   transition: 'all 0.2s',
                   marginBottom: 24
                 }}
                 onMouseOver={(e) => {
-                  if (!(!email.trim() || isLoading)) {
+                  if (!(!email.trim() || !password.trim() || isLoading)) {
                     e.target.style.background = '#0536C7'
                   }
                 }}
                 onMouseOut={(e) => {
-                  if (!(!email.trim() || isLoading)) {
+                  if (!(!email.trim() || !password.trim() || isLoading)) {
                     e.target.style.background = '#0748EA'
                   }
                 }}

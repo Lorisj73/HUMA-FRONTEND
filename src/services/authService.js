@@ -4,10 +4,10 @@ import { api, setAuthToken, clearAuthToken } from './apiClient'
  * Service d'authentification
  */
 
-// Connexion avec email
-export async function login(email) {
+// Connexion avec email et mot de passe
+export async function login(email, password) {
   try {
-    const response = await api.post('/auth/login', { email }, { requiresAuth: false })
+    const response = await api.post('/auth/login', { email, password }, { requiresAuth: false })
     console.log('Login response:', response)
     if (response.token) {
       setAuthToken(response.token)
