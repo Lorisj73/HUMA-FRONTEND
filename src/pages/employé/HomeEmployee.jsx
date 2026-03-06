@@ -24,6 +24,17 @@ export default function HomeEmployee() {
 
   useEffect(() => {
     console.log('🎬 HomeEmployee mounted - useEffect déclenché')
+    
+    // DEBUG: Afficher tout le localStorage
+    console.log('📦 localStorage complet:', {
+      prenom: localStorage.getItem('huma_prenom'),
+      nom: localStorage.getItem('huma_nom'),
+      isManager: localStorage.getItem('huma_is_manager'),
+      onboardingDone: localStorage.getItem('huma_onboarding_done'),
+      checkinHistory: localStorage.getItem('huma_checkin_history'),
+      lastCheckinDate: localStorage.getItem('huma_last_checkin_date')
+    })
+    
     // Récupérer le prénom de l'utilisateur
     const prenom = localStorage.getItem('huma_prenom')
     console.log('👤 Prénom récupéré:', prenom)
