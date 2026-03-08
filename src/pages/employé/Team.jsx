@@ -1,26 +1,143 @@
 import { useState, useEffect } from 'react'
 import Soleil from '@/media/logo_meteo/Soleil.png'
 import SoleilNuageux from '@/media/logo_meteo/Soleil_nuageux.png'
+import HumaLoading from '@/media/HUMA-loading.gif'
+import { getTeamStats, getWeeklySummary, getWeeklyFactors } from '../../services/teamService'
+
+// Mapping des causes anglaises vers français
+const CAUSE_LABELS = {
+  'WORKLOAD': 'Charge / Rythme',
+  'RELATIONS': 'Relations / Ambiance',
+  'MOTIVATION': 'Sens / Motivation',
+  'CLARITY': 'Organisation / Clarté',
+  'RECOGNITION': 'Reconnaissance',
+  'BALANCE': 'Équilibre pro/perso'
+}
 
 export default function Nous() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const [selectedPeriod, setSelectedPeriod] = useState('Semaine')
+  const [isManager, setIsManager] = useState(false)
+  const [isGenerating, setIsGenerating] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  
+  // États pour les données
+  const [teamStats, setTeamStats] = useState(null)
+  const [weeklySummary, setWeeklySummary] = useState(null)
+  const [weeklyFactors, setWeeklyFactors] = useState(null)
 
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768)
     }
     window.addEventListener('resize', handleResize)
+    
+    // Vérifier si l'utilisateur est manager
+    const managerStatus = localStorage.getItem('huma_is_manager')
+    setIsManager(managerStatus === '1')
+    
+    // Charger les données initiales
+    loadData()
+    
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Données en dur pour le développement
-  const teamScore = 8 // Score sur 10
-  const teamMoodCounts = {
-    serein: 230,
-    epanoui: 110,
-    mitige: 50
+  // Recharger les données quand la période change
+  useEffect(() => {
+    loadData()
+  }, [selectedPeriod])
+
+  const loadData = async () => {
+    setIsLoading(true)
+    try {
+      // Mapper le texte français vers le format API
+      const periodMap = {
+        'Semaine': 'week',
+        'Mois': 'month',
+        'Année': 'year'
+      }
+      const period = periodMap[selectedPeriod] || 'week'
+
+      // Charger les données en parallèle
+      const [stats, summary, factors] = await Promise.all([
+        getTeamStats(),
+        getWeeklySummary(null, period),
+        getWeeklyFactors(null, period)
+      ])
+
+      console.log('Team stats:', stats)
+      console.log('Weekly summary:', summary)
+      console.log('Weekly factors:', factors)
+
+      setTeamStats(stats)
+      setWeeklySummary(summary)
+      setWeeklyFactors(factors)
+    } catch (error) {
+      console.error('Erreur lors du chargement des données:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
+
+  // Gestion du chargement avec body scroll lock
+  useEffect(() => {
+    if (isGenerating) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [isGenerating])
+
+  const handleGenerateReport = () => {
+    setIsGenerating(true)
+    setTimeout(() => {
+      setIsGenerating(false)
+    }, 5000)
+  }
+
+  // Calculer les valeurs à partir des données API
+  const teamScore = teamStats?.globalScore ? (teamStats.globalScore / 10).toFixed(1) : 0
+  const moodLabel = teamStats?.moodLabel || 'Chargement...'
+  
+  // Distribution des humeurs (depuis les stats)
+  const distribution = teamStats?.distribution || {}
+  
+  // Facteurs d'influence (depuis weeklyFactors) - convertir en pourcentage
+  const totalCount = weeklyFactors?.summary?.count || 0
+  const influenceFactors = weeklyFactors?.availableCauses?.map(cause => {
+    const data = weeklyFactors.byCause[cause]
+    const count = data?.count || 0
+    const percentage = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0
+    return {
+      label: CAUSE_LABELS[cause] || cause,
+      value: percentage
+    }
+  }).sort((a, b) => b.value - a.value) || [
+    { label: 'Charge / Rythme', value: 0 },
+    { label: 'Relations / Ambiance', value: 0 },
+    { label: 'Sens / Motivation', value: 0 },
+    { label: 'Organisation / Clarté', value: 0 },
+    { label: 'Reconnaissance', value: 0 },
+    { label: 'Équilibre pro/perso', value: 0 }
+  ]
+
+  // Stats basées sur le résumé hebdomadaire
+  const stats = weeklySummary?.stats || {}
+  const excellentDays = stats.excellent || 0
+  const goodDays = stats.good || 0
+  const difficultDays = stats.difficult || 0
+  
+  const tags = weeklyFactors?.availableCauses?.map(cause => CAUSE_LABELS[cause] || cause) || [
+    'Charge / Rythme', 
+    'Relations / Ambiance', 
+    'Sens / Motivation', 
+    'Organisation / Clarté', 
+    'Reconnaissance', 
+    'Équilibre pro/perso'
+  ]
 
   // Calcul de la position du curseur sur la jauge (score de 0 à 10)
   const calculateCursorPosition = (score) => {
@@ -44,19 +161,107 @@ export default function Nous() {
 
   const cursorPos = calculateCursorPosition(teamScore)
 
-  const influenceFactors = [
-    { label: 'Épanoui', value: 0 },
-    { label: 'Serein', value: 0 },
-    { label: 'Mitigé', value: 0 },
-    { label: 'Sous tension', value: 0 },
-    { label: 'Éprouvé', value: 0 }
-  ]
+  // Générer les labels de l'axe X en fonction de la période
+  const getChartLabels = () => {
+    if (!weeklySummary?.daily || weeklySummary.daily.length === 0) {
+      // Valeurs par défaut si pas de données
+      switch (selectedPeriod) {
+        case 'Semaine':
+          return ['L', 'M', 'M', 'J', 'V']
+        case 'Mois':
+          return []
+        case 'Année':
+          return ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
+        default:
+          return []
+      }
+    }
 
-  const tags = ['Charge/Rythme', 'Relations/Ambiance', 'Sens/Motivation', 'Organisation/Clarté', 'Reconnaissance', 'Équilibre pro/perso']
+    const daily = weeklySummary.daily
 
-  const excellentDays = 1
-  const goodDays = 3
-  const difficultDays = 1
+    switch (selectedPeriod) {
+      case 'Semaine':
+        // Afficher les jours de la semaine (L, M, M, J, V)
+        return ['L', 'M', 'M', 'J', 'V']
+      
+      case 'Mois':
+        // Pour le mois, créer un tableau avec des labels pour certains jours seulement
+        // Afficher un label tous les ~5 jours pour éviter la surcharge
+        const step = Math.ceil(daily.length / 6)
+        return daily.map((d, i) => {
+          if (i === 0 || i === daily.length - 1 || i % step === 0) {
+            const date = new Date(d.date)
+            return date.getDate().toString()
+          }
+          return '' // Label vide pour les autres jours
+        })
+      
+      case 'Année':
+        // Pour l'année, afficher les mois
+        return daily.map(d => {
+          const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
+          const monthIndex = parseInt(d.month.split('-')[1]) - 1
+          return monthNames[monthIndex]
+        })
+      
+      default:
+        return []
+    }
+  }
+
+  // Générer les chemins SVG à partir des données daily
+  const generateChartPaths = () => {
+    if (!weeklySummary?.daily || weeklySummary.daily.length === 0) {
+      return { teamPath: '', teamPoints: [] }
+    }
+
+    const daily = weeklySummary.daily
+    const svgWidth = 600
+    const svgHeight = 200
+    const padding = 60
+    const chartWidth = svgWidth - 2 * padding
+    
+    // Calculer les coordonnées X et Y pour chaque point
+    const points = daily.map((day, index) => {
+      // Pour l'année, on utilise averageMood, sinon moodValue
+      let value = selectedPeriod === 'Année' ? day.averageMood : day.moodValue
+      
+      // Si pas de valeur, utiliser une valeur moyenne
+      if (value === null || value === undefined) {
+        value = 50 // Valeur par défaut au milieu
+      }
+      
+      // Pour semaine/mois: moodValue est 0-100, on le convertit en 0-10
+      // Pour année: averageMood est déjà 0-10
+      const normalizedValue = selectedPeriod === 'Année' ? value : value / 10
+      
+      const x = padding + (index * chartWidth) / Math.max(daily.length - 1, 1)
+      // Inverser Y: 10 = haut (y petit), 0 = bas (y grand)
+      const y = svgHeight - (normalizedValue / 10) * svgHeight + 10
+      
+      return { x, y, value: normalizedValue }
+    })
+
+    // Générer le path SVG (ligne simple)
+    const teamPath = points.map((p, i) => 
+      `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`
+    ).join(' ')
+
+    return { teamPath, teamPoints: points }
+  }
+
+  const { teamPath, teamPoints } = generateChartPaths()
+
+  // Afficher un indicateur de chargement
+  if (isLoading) {
+    return (
+      <div className="container" style={{ paddingTop: 40, textAlign: 'center' }}>
+        <div className="card" style={{ padding: 40 }}>
+          <div style={{ fontSize: 16, color: '#757575' }}>Chargement des données de l'équipe...</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ paddingBottom: '12px' }}>
@@ -87,6 +292,35 @@ export default function Nous() {
               Suis l'évolution de ton équipe au sein de l'entreprise.
             </p>
           </div>
+          
+          {/* Bouton Générer un compte rendu (uniquement pour les managers) */}
+          {isManager && (
+            <button
+              onClick={handleGenerateReport}
+              style={{
+                padding: '12px 24px',
+                background: 'var(--primary)',
+                color: 'white',
+                border: 'none',
+                borderRadius: 8,
+                fontSize: 15,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}
+              onMouseEnter={(e) => {
+                e.target.style.transform = 'translateY(-2px)'
+                e.target.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)'
+              }}
+              onMouseLeave={(e) => {
+                e.target.style.transform = 'translateY(0)'
+                e.target.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)'
+              }}
+            >
+              Générer un compte rendu
+            </button>
+          )}
         </div>
 
         {/* Grille principale : Climat + Score */}
@@ -117,10 +351,12 @@ export default function Nous() {
               borderRadius: 12
             }}>
               <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px 0', color: 'var(--text)' }}>
-                Titre résumé
+                {moodLabel}
               </h3>
               <p style={{ fontSize: 14, color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>
-                Lorem ipsum dolor sit amet consectetur. Porta lobortis urna dignissim proin leo libero. Nulla tellus ornare vulputate eget sodales. Ut proin nunc nibh enim neque mattis. Sed nunc varius lorem accumsan enim.
+                {Object.keys(distribution).length > 0 
+                  ? `Les principales influences sont : ${Object.keys(distribution).slice(0, 3).map(cause => CAUSE_LABELS[cause] || cause).join(', ')}.`
+                  : 'Pas encore de données disponibles pour aujourd\'hui.'}
               </p>
             </div>
           </div>
@@ -200,23 +436,26 @@ export default function Nous() {
                   </div>
                   <div style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 2 }}>/10</div>
                   <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
-                    Serein
+                    {moodLabel.split(' - ')[0] || 'Serein'}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Stats des humeurs */}
+            {/* Stats des humeurs - Distribution basée sur les données API */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 14, color: 'var(--muted)' }}>230 x serein</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 14, color: 'var(--muted)' }}>110 x épanoui</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: 14, color: 'var(--muted)' }}>50 x mitigé</span>
-              </div>
+              {Object.entries(distribution).length > 0 ? (
+                Object.entries(distribution).map(([cause, percentage]) => (
+                  <div key={cause} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: 14, color: 'var(--muted)' }}>{CAUSE_LABELS[cause] || cause}</span>
+                    <span style={{ fontSize: 14, color: 'var(--text)', fontWeight: 500 }}>{percentage}%</span>
+                  </div>
+                ))
+              ) : (
+                <div style={{ fontSize: 14, color: 'var(--muted)', textAlign: 'center', padding: '20px 0' }}>
+                  Aucune donnée disponible
+                </div>
+              )}
             </div>
 
             {/* Info text */}
@@ -260,10 +499,10 @@ export default function Nous() {
           {/* Evolution sur la semaine */}
           <div className="card" style={{ padding: isMobile ? '20px' : '32px' }}>
             <h3 style={{ fontSize: 20, fontWeight: 700, margin: '0 0 8px 0', color: 'var(--text)' }}>
-              Evolution sur la semaine
+              Evolution sur {selectedPeriod === 'Semaine' ? 'la semaine' : selectedPeriod === 'Mois' ? 'le mois' : 'l\'année'}
             </h3>
             <p style={{ fontSize: 14, color: 'var(--muted)', margin: '0 0 20px 0' }}>
-              Les humeurs quotidiennes de ton équipe et les tiennes cette semaine
+              Les humeurs quotidiennes de ton équipe {selectedPeriod === 'Semaine' ? 'cette semaine' : selectedPeriod === 'Mois' ? 'ce mois' : 'cette année'}
             </p>
 
             {/* Boutons de filtre */}
@@ -291,10 +530,6 @@ export default function Nous() {
             {/* Légende */}
             <div style={{ display: 'flex', gap: 24, marginBottom: 16 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 40, height: 3, background: '#303030', borderRadius: 2 }} />
-                <span style={{ fontSize: 13, color: '#303030' }}>Moi</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <div style={{ width: 40, height: 3, background: '#0748EA', borderRadius: 2 }} />
                 <span style={{ fontSize: 13, color: '#0748EA' }}>Mon équipe</span>
               </div>
@@ -307,23 +542,16 @@ export default function Nous() {
                 {[0, 1, 2, 3, 4].map(i => (
                   <line key={i} x1="0" y1={i * 50} x2="600" y2={i * 50} stroke="#D9D9D9" strokeWidth="0.5" />
                 ))}
-                {/* Courbe noire (Moi) */}
-                <path d="M 60,100 L 150,80 L 240,140 L 330,110 L 420,90 L 510,110 L 580,95" fill="none" stroke="#303030" strokeWidth="2" />
-                <circle cx="60" cy="100" r="5" fill="white" stroke="#303030" strokeWidth="2" />
-                <circle cx="580" cy="95" r="5" fill="white" stroke="#303030" strokeWidth="2" />
-
-                {/* Courbe bleue (Mon équipe) */}
-                <path d="M 60,120 Q 150,90 240,140 T 420,130 L 510,140 L 580,120" fill="url(#gradientTeam)" opacity="0.3" />
-                <path d="M 60,120 Q 150,90 240,140 T 420,130 L 510,140 L 580,120" fill="none" stroke="#0748EA" strokeWidth="3" />
-                <circle cx="60" cy="120" r="5" fill="white" stroke="#0748EA" strokeWidth="2" />
-                <circle cx="580" cy="120" r="5" fill="white" stroke="#0748EA" strokeWidth="2" />
-
-                {/* Tooltip */}
-                <g>
-                  <rect x="280" y="80" width="120" height="50" rx="8" fill="white" stroke="#D9D9D9" strokeWidth="1" />
-                  <text x="340" y="100" textAnchor="middle" fill="#1E1E1E" fontSize="14" fontWeight="600">Sous tension</text>
-                  <text x="340" y="118" textAnchor="middle" fill="#757575" fontSize="11">Charge/Rythme</text>
-                </g>
+                
+                {/* Courbe bleue (Mon équipe) - Dynamique */}
+                {teamPath && (
+                  <>
+                    <path d={teamPath} fill="none" stroke="#0748EA" strokeWidth="3" />
+                    {teamPoints.map((point, i) => (
+                      <circle key={i} cx={point.x} cy={point.y} r="5" fill="white" stroke="#0748EA" strokeWidth="2" />
+                    ))}
+                  </>
+                )}
 
                 <defs>
                   <linearGradient id="gradientTeam" x1="0%" y1="100%" x2="0%" y2="0%">
@@ -334,8 +562,8 @@ export default function Nous() {
               </svg>
               {/* Labels des jours */}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginTop: 8, paddingLeft: 20, paddingRight: 20 }}>
-                {['L', 'M', 'M', 'J', 'V'].map((day, i) => (
-                  <div key={i}>{day}</div>
+                {getChartLabels().map((label, i) => (
+                  <div key={i} style={{ opacity: label ? 1 : 0, minWidth: selectedPeriod === 'Mois' ? '10px' : 'auto' }}>{label || ' '}</div>
                 ))}
               </div>
             </div>
@@ -406,6 +634,60 @@ export default function Nous() {
         </div>
 
       </div>
+
+      {/* Modal de chargement IA (uniquement pour les managers) */}
+      {isManager && isGenerating && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.7)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: 'white',
+            borderRadius: 16,
+            padding: '48px',
+            textAlign: 'center',
+            maxWidth: '400px',
+            margin: '0 20px'
+          }}>
+            <img 
+              src={HumaLoading} 
+              alt="Génération en cours" 
+              style={{ 
+                width: '120px', 
+                height: '120px',
+                marginBottom: '24px',
+                display: 'block',
+                margin: '0 auto 24px'
+              }} 
+            />
+            <h3 style={{
+              fontSize: 20,
+              fontWeight: 600,
+              margin: '0 0 12px 0',
+              color: '#1E1E1E'
+            }}>
+              Génération en cours...
+            </h3>
+            <p style={{
+              fontSize: 14,
+              color: '#757575',
+              margin: 0,
+              lineHeight: 1.6
+            }}>
+              L'IA analyse les données de votre équipe pour générer un compte rendu personnalisé.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

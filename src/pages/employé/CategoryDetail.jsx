@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 export default function CategoryDetail() {
   const navigate = useNavigate()
   const { categoryId } = useParams()
+  const [isManager, setIsManager] = useState(false)
 
   // Décoder le nom de la catégorie depuis l'URL
   const category = categoryId ? { name: decodeURIComponent(categoryId) } : null
@@ -13,6 +14,12 @@ export default function CategoryDetail() {
   const [startX, setStartX] = useState(0)
   const [likes, setLikes] = useState({})
   const carouselRef = useRef(null)
+
+  // Vérifier si l'utilisateur est manager
+  useEffect(() => {
+    const managerStatus = localStorage.getItem('huma_is_manager')
+    setIsManager(managerStatus === '1')
+  }, [])
 
   // Données de feedbacks pour la catégorie (mock data)
   const feedbacks = [

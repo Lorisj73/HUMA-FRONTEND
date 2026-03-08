@@ -40,3 +40,35 @@ export async function getTeamStats(teamId = null) {
     throw error
   }
 }
+
+// Récupérer le résumé hebdomadaire/mensuel/annuel de l'équipe
+export async function getWeeklySummary(teamId = null, period = 'week', date = null) {
+  try {
+    const params = new URLSearchParams()
+    if (teamId) params.append('teamId', teamId)
+    params.append('period', period.toLowerCase())
+    if (date) params.append('date', date)
+    
+    const response = await api.get(`/team/weekly-summary?${params.toString()}`)
+    return response
+  } catch (error) {
+    console.error('Erreur lors de la récupération du résumé hebdomadaire:', error)
+    throw error
+  }
+}
+
+// Récupérer les facteurs d'influence hebdomadaires/mensuels/annuels
+export async function getWeeklyFactors(teamId = null, period = 'week', date = null) {
+  try {
+    const params = new URLSearchParams()
+    if (teamId) params.append('teamId', teamId)
+    params.append('period', period.toLowerCase())
+    if (date) params.append('date', date)
+    
+    const response = await api.get(`/team/weekly-factors?${params.toString()}`)
+    return response
+  } catch (error) {
+    console.error('Erreur lors de la récupération des facteurs:', error)
+    throw error
+  }
+}

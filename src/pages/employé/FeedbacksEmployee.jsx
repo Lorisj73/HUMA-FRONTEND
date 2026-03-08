@@ -13,8 +13,13 @@ export default function FeedbacksEmployee() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [feedbacksData, setFeedbacksData] = useState([])
+  const [isManager, setIsManager] = useState(false)
 
   useEffect(() => {
+    // Vérifier si l'utilisateur est manager
+    const managerStatus = localStorage.getItem('huma_is_manager')
+    setIsManager(managerStatus === '1')
+    
     loadFeedbacks()
   }, [])
 

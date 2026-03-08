@@ -9,6 +9,7 @@ import { getCheckinHistory, getWeeklySummary, getWeeklyFactors } from '../../ser
 
 export default function MeEmployee() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  const [isManager, setIsManager] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState('Semaine')
   const [isLoading, setIsLoading] = useState(true)
   
@@ -36,6 +37,11 @@ export default function MeEmployee() {
       setIsMobile(window.innerWidth < 768)
     }
     window.addEventListener('resize', handleResize)
+    
+    // Vérifier si l'utilisateur est manager
+    const managerStatus = localStorage.getItem('huma_is_manager')
+    setIsManager(managerStatus === '1')
+    
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 

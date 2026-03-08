@@ -21,6 +21,7 @@ export default function HomeEmployee() {
   const [isLoading, setIsLoading] = useState(true)
   const [userFirstName, setUserFirstName] = useState('John')
   const [hasCheckedInToday, setHasCheckedInToday] = useState(false)
+  const [isManager, setIsManager] = useState(false)
 
   useEffect(() => {
     console.log('🎬 HomeEmployee mounted - useEffect déclenché')
@@ -41,6 +42,10 @@ export default function HomeEmployee() {
     if (prenom) {
       setUserFirstName(prenom)
     }
+    
+    // Vérifier si l'utilisateur est manager
+    const managerStatus = localStorage.getItem('huma_is_manager')
+    setIsManager(managerStatus === '1')
     
     console.log('🔄 Lancement de loadData()...')
     loadData()
