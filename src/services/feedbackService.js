@@ -7,7 +7,6 @@ import { api } from './apiClient'
 // Mapping des catégories entre le frontend et le backend
 const CATEGORY_MAPPING = {
   'Charge / Rythme': 'WORKLOAD',
-  'Relations / Ambiance': 'RELATIONS',
   'Sens / Motivation': 'MOTIVATION',
   'Organisation / Clarté': 'ORGANIZATION',
   'Reconnaissance': 'RECOGNITION',
@@ -17,7 +16,6 @@ const CATEGORY_MAPPING = {
 
 const CATEGORY_REVERSE_MAPPING = {
   'WORKLOAD': 'Charge / Rythme',
-  'RELATIONS': 'Relations / Ambiance',
   'MOTIVATION': 'Sens / Motivation',
   'ORGANIZATION': 'Organisation / Clarté',
   'RECOGNITION': 'Reconnaissance',
@@ -51,7 +49,10 @@ export async function getFeedbacks() {
     if (Array.isArray(response)) {
       return response.map(feedback => ({
         ...feedback,
-        categoryLabel: CATEGORY_REVERSE_MAPPING[feedback.category] || feedback.category
+        categoryLabel: CATEGORY_REVERSE_MAPPING[feedback.category] || feedback.category,
+        preview: feedback.feedbackText && feedback.feedbackText.length > 30 
+          ? feedback.feedbackText.substring(0, 30) + '...' 
+          : feedback.feedbackText
       }))
     }
     return []
@@ -65,7 +66,6 @@ export async function getFeedbacks() {
 export function getCategories() {
   return [
     'Charge / Rythme',
-    'Relations / Ambiance',
     'Sens / Motivation',
     'Organisation / Clarté',
     'Reconnaissance',

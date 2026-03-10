@@ -53,7 +53,6 @@ export default function FeedbacksEmployee() {
   const getCategoryGradient = (categoryName) => {
     const gradients = {
       'Charge / Rythme': 'linear-gradient(135deg, rgba(147, 197, 253, 0.3) 0%, rgba(219, 234, 254, 0.3) 100%)',
-      'Relations / Ambiance': 'linear-gradient(135deg, rgba(196, 181, 253, 0.3) 0%, rgba(221, 214, 254, 0.3) 100%)',
       'Sens / Motivation': 'linear-gradient(135deg, rgba(254, 215, 170, 0.3) 0%, rgba(254, 226, 196, 0.3) 100%)',
       'Organisation / Clarté': 'linear-gradient(135deg, rgba(209, 213, 219, 0.3) 0%, rgba(229, 231, 235, 0.3) 100%)',
       'Reconnaissance': 'linear-gradient(135deg, rgba(254, 215, 170, 0.4) 0%, rgba(254, 240, 221, 0.3) 100%)',
