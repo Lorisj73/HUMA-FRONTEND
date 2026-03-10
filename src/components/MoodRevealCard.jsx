@@ -19,18 +19,18 @@ export default function MoodRevealCard({ mood = 'moyen' }) {
 
   return (
     <div className="card" style={{
-      padding: '20px',
+      padding: '16px',
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: '200px'
+      height: '100%'
     }}>
       <h2 style={{ 
-        fontSize: '18px', 
-        fontWeight: '700',
+        fontSize: '16px', 
+        fontWeight: '600',
         color: 'var(--text)',
-        marginBottom: '16px',
+        marginBottom: '12px',
         alignSelf: 'flex-start'
       }}>
         Ton humeur du jour

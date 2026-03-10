@@ -15,7 +15,6 @@ export default function CategoryDetail() {
   const [active, setActive] = useState(0)
   const [isDown, setIsDown] = useState(false)
   const [startX, setStartX] = useState(0)
-  const [likes, setLikes] = useState({})
   const carouselRef = useRef(null)
 
   // Vérifier si l'utilisateur est manager
@@ -175,19 +174,10 @@ export default function CategoryDetail() {
     }
   }
 
-  const toggleLike = (feedbackId, e) => {
-    e.stopPropagation()
-    setLikes(prev => ({
-      ...prev,
-      [feedbackId]: !prev[feedbackId]
-    }))
-  }
-
   return (
     <div style={{
       height: '100vh',
       width: '100vw',
-      background: category?.gradient || 'linear-gradient(135deg, rgba(147, 197, 253, 0.3) 0%, rgba(219, 234, 254, 0.3) 100%)',
       position: 'fixed',
       top: 0,
       left: 0,
@@ -195,36 +185,39 @@ export default function CategoryDetail() {
       display: 'flex',
       flexDirection: 'column'
     }}>
+      {/* Bouton retour */}
+      <button
+        onClick={() => navigate('/feedbacks')}
+        style={{
+          position: 'absolute',
+          top: 120,
+          left: 48,
+          zIndex: 150,
+          background: 'rgba(255, 255, 255, 0.9)',
+          border: '1px solid rgba(0,0,0,0.1)',
+          borderRadius: 8,
+          padding: '12px 20px',
+          fontSize: 15,
+          fontWeight: 600,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          color: 'var(--text)'
+        }}
+      >
+        ← Retour
+      </button>
+
       {/* Header */}
       <div style={{
         padding: '16px 48px',
+        paddingTop: 168,
+        paddingBottom: 32,
         position: 'relative',
-        zIndex: 0,
-        flexShrink: 0,
-        background: 'rgba(255, 255, 255, 0.2)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)'
+        zIndex: 100,
+        flexShrink: 0
       }}>
-        <button
-          onClick={() => navigate('/feedbacks')}
-          style={{
-            background: 'rgba(255, 255, 255, 0.9)',
-            border: '1px solid rgba(0,0,0,0.1)',
-            borderRadius: 8,
-            padding: '12px 20px',
-            fontSize: 15,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            color: 'var(--text)',
-            marginBottom: 24
-          }}
-        >
-          ← Retour
-        </button>
-
         <h1 style={{
           fontSize: 28,
           margin: '0 0 4px',
@@ -313,7 +306,6 @@ export default function CategoryDetail() {
                 left: '50%',
                 userSelect: 'none',
                 transformOrigin: '0% 100%',
-                boxShadow: '0 10px 50px 10px rgba(0, 0, 0, 0.2)',
                 background: 'rgba(255, 255, 255, 0.95)',
                 pointerEvents: 'all',
                 transform: `translate(var(--x), var(--y)) rotate(var(--rot))`,
@@ -415,7 +407,7 @@ export default function CategoryDetail() {
                 {/* Footer */}
                 <div style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
+                  justifyContent: 'flex-start',
                   alignItems: 'center'
                 }}>
                   <div style={{
@@ -423,41 +415,6 @@ export default function CategoryDetail() {
                     color: '#9CA3AF'
                   }}>
                     {formatDate(feedback.date)}
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12
-                  }}>
-                    <button
-                      onClick={(e) => toggleLike(feedback.id, e)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        padding: '6px 12px',
-                        borderRadius: 20,
-                        border: 'none',
-                        background: likes[feedback.id] ? '#ef4444' : 'rgba(0,0,0,0.05)',
-                        color: likes[feedback.id] ? 'white' : '#6B7280',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!likes[feedback.id]) {
-                          e.currentTarget.style.background = 'rgba(0,0,0,0.1)'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!likes[feedback.id]) {
-                          e.currentTarget.style.background = 'rgba(0,0,0,0.05)'
-                        }
-                      }}
-                    >
-                      {likes[feedback.id] ? '♥' : '♡'} Like
-                    </button>
                   </div>
                 </div>
               </div>
