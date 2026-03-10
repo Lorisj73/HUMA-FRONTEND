@@ -6,6 +6,7 @@ import Pluvieux from '@/media/logo_meteo/Pluvieux.png'
 import Orage from '@/media/logo_meteo/Orage.png'
 import WeeklyChart from '@/components/WeeklyChart'
 import { getCheckinHistory, getWeeklySummary, getWeeklyFactors } from '../../services/checkinService'
+import { getUserInfo } from '../../services/userService'
 
 export default function MeEmployee() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -31,6 +32,11 @@ export default function MeEmployee() {
     { label: 'Sous tension', value: 0 },
     { label: 'Éprouvé', value: 0 }
   ])
+  
+  // États pour le niveau et XP (provenant de l'API)
+  const [level, setLevel] = useState(1)
+  const [xp, setXp] = useState(0)
+  const [maxXp, setMaxXp] = useState(100)
 
   useEffect(() => {
     const handleResize = () => {
@@ -42,12 +48,30 @@ export default function MeEmployee() {
     const managerStatus = localStorage.getItem('huma_is_manager')
     setIsManager(managerStatus === '1')
     
+    // Charger les informations utilisateur au démarrage
+    loadUserInfo()
+    
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
   useEffect(() => {
     loadData()
   }, [selectedPeriod])
+  
+  // Charger les informations utilisateur (niveau, XP)
+  const loadUserInfo = async () => {
+    try {
+      const userInfo = await getUserInfo()
+      setLevel(userInfo.current_level || 1)
+      setXp(userInfo.total_xp || 0)
+      
+      // Calculer maxXp selon le niveau (formule: niveau * 100)
+      const calculatedMaxXp = (userInfo.current_level || 1) * 100
+      setMaxXp(calculatedMaxXp)
+    } catch (error) {
+      console.error('Erreur lors du chargement des infos utilisateur:', error)
+    }
+  }
 
   // Fonction pour regrouper les données selon la période
   const groupDataByPeriod = (data, period) => {
@@ -209,9 +233,6 @@ export default function MeEmployee() {
   const goodDays = moodDistribution.good
   const difficultDays = moodDistribution.difficult
   const totalDays = selectedPeriod === 'Semaine' ? 5 : selectedPeriod === 'Mois' ? 22 : 252
-  const level = 5
-  const xp = 350
-  const maxXp = 500
 
   // Calculer le pourcentage pour la jauge
   const gaugePercentage = avgMood / 100

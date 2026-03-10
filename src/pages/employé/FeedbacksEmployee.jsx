@@ -14,6 +14,7 @@ export default function FeedbacksEmployee() {
   const [error, setError] = useState('')
   const [feedbacksData, setFeedbacksData] = useState([])
   const [isManager, setIsManager] = useState(false)
+  const [categoriesWithCounts, setCategoriesWithCounts] = useState([])
 
   useEffect(() => {
     // Vérifier si l'utilisateur est manager
@@ -27,9 +28,39 @@ export default function FeedbacksEmployee() {
     try {
       const feedbacks = await getFeedbacks()
       setFeedbacksData(feedbacks)
+      
+      // Calculer les compteurs par catégorie
+      const counts = {}
+      feedbacks.forEach(fb => {
+        const label = fb.categoryLabel || fb.category
+        counts[label] = (counts[label] || 0) + 1
+      })
+      
+      // Créer les catégories avec leurs compteurs
+      const allCategories = getCategories().map(catName => ({
+        name: catName,
+        count: counts[catName] || 0,
+        gradient: getCategoryGradient(catName)
+      }))
+      
+      setCategoriesWithCounts(allCategories)
     } catch (error) {
       console.error('Erreur lors du chargement des feedbacks:', error)
     }
+  }
+  
+  // Fonction pour obtenir le gradient selon la catégorie
+  const getCategoryGradient = (categoryName) => {
+    const gradients = {
+      'Charge / Rythme': 'linear-gradient(135deg, rgba(147, 197, 253, 0.3) 0%, rgba(219, 234, 254, 0.3) 100%)',
+      'Relations / Ambiance': 'linear-gradient(135deg, rgba(196, 181, 253, 0.3) 0%, rgba(221, 214, 254, 0.3) 100%)',
+      'Sens / Motivation': 'linear-gradient(135deg, rgba(254, 215, 170, 0.3) 0%, rgba(254, 226, 196, 0.3) 100%)',
+      'Organisation / Clarté': 'linear-gradient(135deg, rgba(209, 213, 219, 0.3) 0%, rgba(229, 231, 235, 0.3) 100%)',
+      'Reconnaissance': 'linear-gradient(135deg, rgba(254, 215, 170, 0.4) 0%, rgba(254, 240, 221, 0.3) 100%)',
+      'Équilibre vie pro / perso': 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(254, 215, 170, 0.3) 100%)',
+      'Locaux / Matériel': 'linear-gradient(135deg, rgba(254, 215, 170, 0.3) 0%, rgba(254, 226, 196, 0.3) 100%)'
+    }
+    return gradients[categoryName] || 'linear-gradient(135deg, rgba(147, 197, 253, 0.3) 0%, rgba(219, 234, 254, 0.3) 100%)'
   }
 
   const handleSubmitFeedback = async () => {
@@ -61,39 +92,15 @@ export default function FeedbacksEmployee() {
     }
   }
 
-  // Données des catégories avec leurs compteurs
-  const categories = [
-    { 
-      name: 'Charge / Rythme', 
-      count: 9,
-      gradient: 'linear-gradient(135deg, rgba(147, 197, 253, 0.3) 0%, rgba(219, 234, 254, 0.3) 100%)'
-    },
-    { 
-      name: 'Relations / Ambiance', 
-      count: 7,
-      gradient: 'linear-gradient(135deg, rgba(196, 181, 253, 0.3) 0%, rgba(221, 214, 254, 0.3) 100%)'
-    },
-    { 
-      name: 'Organisation / Clarté', 
-      count: 5,
-      gradient: 'linear-gradient(135deg, rgba(209, 213, 219, 0.3) 0%, rgba(229, 231, 235, 0.3) 100%)'
-    },
-    { 
-      name: 'Reconnaissance', 
-      count: 4,
-      gradient: 'linear-gradient(135deg, rgba(254, 215, 170, 0.4) 0%, rgba(254, 240, 221, 0.3) 100%)'
-    },
-    { 
-      name: 'Équilibre vie pro / perso', 
-      count: 12,
-      gradient: 'linear-gradient(135deg, rgba(251, 191, 36, 0.3) 0%, rgba(254, 215, 170, 0.3) 100%)'
-    },
-    { 
-      name: 'Locaux / Matériel', 
-      count: 4,
-      gradient: 'linear-gradient(135deg, rgba(254, 215, 170, 0.3) 0%, rgba(254, 226, 196, 0.3) 100%)'
-    }
-  ]
+  // Fonction pour obtenir le dernier feedback d'une catégorie
+  const getLastFeedbackForCategory = (categoryName) => {
+    const categoryFeedbacks = feedbacksData.filter(fb => fb.categoryLabel === categoryName)
+    if (categoryFeedbacks.length === 0) return null
+    
+    // Trier par date décroissante et prendre le premier
+    const sorted = categoryFeedbacks.sort((a, b) => new Date(b.date) - new Date(a.date))
+    return sorted[0]
+  }
 
   return (
     <div style={{ 
@@ -153,7 +160,9 @@ export default function FeedbacksEmployee() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: 24
         }}>
-          {categories.map((category, index) => (
+          {categoriesWithCounts.map((category, index) => {
+            const lastFeedback = getLastFeedbackForCategory(category.name)
+            return (
             <div
               key={index}
               className="card"
@@ -214,34 +223,37 @@ export default function FeedbacksEmployee() {
               </div>
 
               {/* Carte de proposition */}
-              <div style={{
-                background: 'var(--card)',
-                padding: 16,
-                borderRadius: 12,
-                border: '1px solid var(--border)'
-              }}>
+              {category.count > 0 && lastFeedback && (
                 <div style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: '#6B7280',
-                  marginBottom: 8,
-                  textTransform: 'uppercase',
-                  letterSpacing: 0.5
+                  background: 'var(--card)',
+                  padding: 16,
+                  borderRadius: 12,
+                  border: '1px solid var(--border)'
                 }}>
-                  Proposition
+                  <div style={{
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    marginBottom: 8,
+                    textTransform: 'uppercase',
+                    letterSpacing: 0.5
+                  }}>
+                    Dernier feedback
+                  </div>
+                  <p style={{
+                    fontSize: 13,
+                    color: 'var(--text)',
+                    margin: 0,
+                    lineHeight: 1.6,
+                    fontStyle: 'italic'
+                  }}>
+                    "{lastFeedback.preview}"
+                  </p>
                 </div>
-                <p style={{
-                  fontSize: 13,
-                  color: 'var(--text)',
-                  margin: 0,
-                  lineHeight: 1.6,
-                  fontStyle: 'italic'
-                }}>
-                  " Je propose qu'on ajoute des plantes et de meilleures lampes dans l'open space, c'est un peu triste."
-                </p>
-              </div>
+              )}
             </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 

@@ -7,21 +7,21 @@ import { api } from './apiClient'
 // Mapping des catégories entre le frontend et le backend
 const CATEGORY_MAPPING = {
   'Charge / Rythme': 'WORKLOAD',
-  'Relations / Ambiance': 'RELATIONSHIPS',
-  'Sens / Motivation': 'MEANING',
+  'Relations / Ambiance': 'RELATIONS',
+  'Sens / Motivation': 'MOTIVATION',
   'Organisation / Clarté': 'ORGANIZATION',
   'Reconnaissance': 'RECOGNITION',
-  'Équilibre vie pro / perso': 'BALANCE',
+  'Équilibre vie pro / perso': 'WORK_LIFE_BALANCE',
   'Locaux / Matériel': 'FACILITIES'
 }
 
 const CATEGORY_REVERSE_MAPPING = {
   'WORKLOAD': 'Charge / Rythme',
-  'RELATIONSHIPS': 'Relations / Ambiance',
-  'MEANING': 'Sens / Motivation',
+  'RELATIONS': 'Relations / Ambiance',
+  'MOTIVATION': 'Sens / Motivation',
   'ORGANIZATION': 'Organisation / Clarté',
   'RECOGNITION': 'Reconnaissance',
-  'BALANCE': 'Équilibre vie pro / perso',
+  'WORK_LIFE_BALANCE': 'Équilibre vie pro / perso',
   'FACILITIES': 'Locaux / Matériel'
 }
 
@@ -47,14 +47,14 @@ export async function createFeedback(category, feedbackText, solutionText = '', 
 export async function getFeedbacks() {
   try {
     const response = await api.get('/feedbacks')
-    // Convertir les catégories API en labels frontend
-    if (response.feedbacks) {
-      response.feedbacks = response.feedbacks.map(feedback => ({
+    // Convertir les catégories API en labels frontend et retourner directement le tableau
+    if (Array.isArray(response)) {
+      return response.map(feedback => ({
         ...feedback,
         categoryLabel: CATEGORY_REVERSE_MAPPING[feedback.category] || feedback.category
       }))
     }
-    return response
+    return []
   } catch (error) {
     console.error('Erreur lors de la récupération des feedbacks:', error)
     throw error
