@@ -72,3 +72,18 @@ export async function getWeeklyFactors(teamId = null, period = 'week', date = nu
     throw error
   }
 }
+
+// Générer un rapport d'analyse hebdomadaire IA pour les managers
+export async function generateWeeklyAnalysisReport(teamId = null, weekStart = null) {
+  try {
+    const params = new URLSearchParams()
+    if (teamId) params.append('teamId', teamId)
+    if (weekStart) params.append('weekStart', weekStart)
+    
+    const response = await api.get(`/team/weekly-analysis-report?${params.toString()}`)
+    return response
+  } catch (error) {
+    console.error('Erreur lors de la génération du rapport d\'analyse:', error)
+    throw error
+  }
+}
