@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import logoWelcome from '../../media/logo_welcome.png'
+import onboardingIntroImage from '../../media/onboarding/image.png'
 import { login } from '../../services/authService'
 import { updateUserInfo, updateOnboarding } from '../../services/userService'
 
@@ -81,6 +82,7 @@ export default function OnboardingEmployee({ onDone }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
+  const [postLoginStep, setPostLoginStep] = useState(3)
   const [prenom, setPrenom] = useState('')
   const [nom, setNom] = useState('')
   const [isManager, setIsManager] = useState(false)
@@ -129,6 +131,8 @@ export default function OnboardingEmployee({ onDone }) {
         return
       }
       
+      let nextStepAfterLogin = 3
+
       // Vérifier si l'utilisateur a déjà un firstName et lastName
       if (response.user && response.user.firstName && response.user.lastName) {
         // L'utilisateur a déjà ces informations, les sauvegarder et passer directement à l'étape 3
@@ -142,16 +146,19 @@ export default function OnboardingEmployee({ onDone }) {
         if (response.user.role || response.user.isManager !== undefined) {
           setIsManager(isManagerValue)
           localStorage.setItem('huma_is_manager', isManagerValue ? '1' : '0')
-          // Si tout est déjà rempli, passer directement aux questions d'onboarding (étape 4)
-          setStep(4)
+          // Si tout est déjà rempli, passer directement aux questions d'onboarding (étape 5)
+          nextStepAfterLogin = 5
         } else {
-          // Sinon, passer à l'étape 3 pour demander le rôle
-          setStep(3)
+          // Sinon, passer à l'étape 4 pour demander le rôle
+          nextStepAfterLogin = 4
         }
       } else {
-        // L'utilisateur n'a pas encore ces infos, passer à l'étape 2 pour les demander
-        setStep(2)
+        // L'utilisateur n'a pas encore ces infos, passer à l'étape 3 pour les demander
+        nextStepAfterLogin = 3
       }
+
+      setPostLoginStep(nextStepAfterLogin)
+      setStep(2)
     } catch (err) {
       console.error('Erreur de connexion:', err)
       setError('Impossible de se connecter. Veuillez réessayer.')
@@ -168,6 +175,11 @@ export default function OnboardingEmployee({ onDone }) {
     }
 
     if(step === 2) {
+      setStep(postLoginStep)
+      return
+    }
+
+    if(step === 3) {
       // Envoi des infos nom/prénom à l'API
       if (!prenom.trim() || !nom.trim()) {
         setError('Veuillez renseigner votre nom et prénom')
@@ -191,7 +203,7 @@ export default function OnboardingEmployee({ onDone }) {
       return
     }
 
-    if(step < 7) {
+    if(step < 8) {
       setStep(s => s+1)
     } else {
       // Dernière étape : envoi des données d'onboarding à l'API
@@ -231,8 +243,91 @@ export default function OnboardingEmployee({ onDone }) {
 
   return (
     <>
-      {(step === 0 || step === 3 || step === 4 || step === 5 || step === 6) && <OnboardingBackground />}
+      {(step === 0 || step === 4 || step === 5 || step === 6 || step === 7) && <OnboardingBackground />}
       <div style={{maxWidth:960, margin:'0 auto', padding:'40px 24px 40px'}}>
+        {step === 2 && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 'calc(100vh - 120px)'
+          }}>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: 16,
+              padding: '32px 40px',
+              maxWidth: 800,
+              width: '100%',
+              textAlign: 'center'
+            }}>
+              <img
+                src={onboardingIntroImage}
+                alt="Introduction onboarding"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  borderRadius: 12,
+                  display: 'block',
+                  marginBottom: 24
+                }}
+              />
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                marginBottom: 24
+              }}>
+                <div style={{
+                  width: 32,
+                  height: 8,
+                  borderRadius: 4,
+                  background: '#0748EA'
+                }} />
+                <div style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#D9D9D9'
+                }} />
+                <div style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#D9D9D9'
+                }} />
+                <div style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#D9D9D9'
+                }} />
+              </div>
+
+              <button
+                className="btn primary"
+                onClick={next}
+                style={{
+                  width: '100%',
+                  background: '#0748EA',
+                  color: 'white',
+                  padding: '14px 32px',
+                  fontSize: 16,
+                  fontWeight: 500,
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  boxShadow: '0px 4px 8px rgba(7, 72, 234, 0.2)'
+                }}
+              >
+                Continuer
+              </button>
+            </div>
+          </div>
+        )}
+
         {step === 0 && (
           <div style={{
             background: 'rgba(255, 255, 255, 0.4)',
@@ -440,6 +535,7 @@ export default function OnboardingEmployee({ onDone }) {
                     placeholder="Entrez votre mot de passe"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && email.trim() && password.trim() && !isLoading) next() }}
                     disabled={isLoading}
                     style={{
                       width: '100%',
@@ -555,46 +651,57 @@ export default function OnboardingEmployee({ onDone }) {
                 {isLoading ? 'Connexion...' : 'Se connecter'}
               </button>
 
-              <div style={{
-                borderTop: '1px solid #D9D9D9',
-                paddingTop: 24,
-                fontSize: 14,
-                color: '#757575'
-              }}>
-                <p style={{margin: '0 0 8px'}}>
-                  Besoin d'un coup de main pour te connecter ?
-                </p>
-                <p style={{margin: 0}}>
-                  <a href="#" style={{
-                    color: '#303030',
-                    textDecoration: 'underline',
-                    fontSize: 14
-                  }}>
-                    Demander l'accès
-                  </a>
-                </p>
-              </div>
+            </div>
+          </div>
 
+          {/* Demo credentials box - bottom left */}
+          <div style={{
+            position: 'fixed',
+            bottom: 32,
+            left: 32,
+            background: 'rgba(255, 255, 255, 0.4)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 12,
+            padding: '20px 24px',
+            maxWidth: 320,
+            border: '1px solid rgba(255, 255, 255, 0.6)',
+            boxShadow: '0 4px 16px rgba(7, 72, 234, 0.08)',
+            zIndex: 10
+          }}>
+            <p style={{
+              margin: '0 0 12px',
+              fontSize: 13,
+              color: '#303030',
+              lineHeight: 1.5
+            }}>
+              À des fins de démonstration, des comptes de test ont été créés.
+            </p>
+            <div style={{display: 'flex', flexDirection: 'column', gap: 10}}>
               <div style={{
-                marginTop: 24,
-                paddingTop: 24,
-                borderTop: '1px solid #D9D9D9'
+                background: 'rgba(255, 255, 255, 0.6)',
+                borderRadius: 8,
+                padding: '10px 14px'
               }}>
-                <a href="#" style={{
-                  color: '#303030',
-                  textDecoration: 'underline',
-                  fontSize: 14
-                }}>
-                  Continuer sans SSO
-                </a>
+                <p style={{margin: '0 0 4px', fontSize: 12, color: '#757575', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em'}}>Manager</p>
+                <p style={{margin: '0 0 2px', fontSize: 13, color: '#1E1E1E'}}><span style={{color: '#757575'}}>Login :</span> manager2@local.test</p>
+                <p style={{margin: 0, fontSize: 13, color: '#1E1E1E'}}><span style={{color: '#757575'}}>Mdp :</span> adminadmin</p>
+              </div>
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.6)',
+                borderRadius: 8,
+                padding: '10px 14px'
+              }}>
+                <p style={{margin: '0 0 4px', fontSize: 12, color: '#757575', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em'}}>Employé</p>
+                <p style={{margin: '0 0 2px', fontSize: 13, color: '#1E1E1E'}}><span style={{color: '#757575'}}>Login :</span> employee06@local.test</p>
+                <p style={{margin: 0, fontSize: 13, color: '#1E1E1E'}}><span style={{color: '#757575'}}>Mdp :</span> adminadmin</p>
               </div>
             </div>
           </div>
         </>
       )}
 
-      {/* Step 2: Name Collection */}
-      {step === 2 && (
+      {/* Step 3: Name Collection */}
+      {step === 3 && (
         <>
           <OnboardingBackground />
           
@@ -803,8 +910,8 @@ export default function OnboardingEmployee({ onDone }) {
         </>
       )}
 
-      {/* Step 3: Comment ça marche? */}
-      {step === 3 && (
+      {/* Step 4: Comment ça marche? */}
+      {step === 4 && (
         <>
           <OnboardingBackground />
           
@@ -1033,8 +1140,8 @@ export default function OnboardingEmployee({ onDone }) {
         </>
       )}
 
-      {/* Step 4: Questionnaire */}
-      {step === 4 && (
+      {/* Step 5: Questionnaire */}
+      {step === 5 && (
         <>
           <OnboardingBackground />
           
@@ -1230,8 +1337,8 @@ export default function OnboardingEmployee({ onDone }) {
         </>
       )}
 
-      {/* Step 5: Questionnaire 3/3 - Sources d'énergie */}
-      {step === 5 && (
+      {/* Step 6: Questionnaire 3/3 - Sources d'énergie */}
+      {step === 6 && (
         <>
           <OnboardingBackground />
           
@@ -1426,8 +1533,8 @@ export default function OnboardingEmployee({ onDone }) {
         </>
       )}
 
-      {/* Step 6: Environnement de travail */}
-      {step === 6 && (
+      {/* Step 7: Environnement de travail */}
+      {step === 7 && (
         <>
           <OnboardingBackground />
           
@@ -1620,8 +1727,8 @@ export default function OnboardingEmployee({ onDone }) {
           </div>
         </>      )}
 
-      {/* Step 7: Félicitations */}
-      {step === 7 && (
+      {/* Step 8: Félicitations */}
+      {step === 8 && (
         <>
           <div style={{
             minHeight: '100vh',

@@ -537,12 +537,13 @@ export default function Nous() {
             <div style={{
               position: 'relative',
               background: '#F2F6FF',
-              padding: isMobile
-                ? (isManager ? '14px 16px 64px 16px' : '14px 16px')
-                : (isManager ? '16px 20px 66px 20px' : '16px 20px'),
+              padding: '16px 48px',
               borderRadius: 10,
               border: '1px solid #C8D9FC',
-              flex: 1
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 12
             }}>
               <div style={{
                 position: 'absolute',
@@ -556,7 +557,7 @@ export default function Nous() {
                 transform: 'translateY(-50%) rotate(45deg)'
               }} />
 
-              <h3 style={{ fontSize: isMobile ? 20 : 20, fontWeight: 700, margin: '0 0 10px 0', color: '#2F2F33', lineHeight: 1.1 }}>
+              <h3 style={{ fontSize: isMobile ? 20 : 20, fontWeight: 700, margin: 0, color: '#2F2F33', lineHeight: 1.1 }}>
                 {climateTitle}
               </h3>
               <p style={{ fontSize: isMobile ? 14 : 16, color: '#2F2F33', margin: 0, lineHeight: 1.4 }}>
@@ -568,9 +569,6 @@ export default function Nous() {
                 <button
                   onClick={handleReportButtonClick}
                   style={{
-                    position: 'absolute',
-                    right: isMobile ? 12 : 16,
-                    bottom: isMobile ? 12 : 16,
                     padding: isMobile ? '10px 14px' : '10px 16px',
                     background: '#0748EA',
                     color: 'white',
@@ -578,10 +576,10 @@ export default function Nous() {
                     borderRadius: 8,
                     fontSize: isMobile ? 13 : 14,
                     fontWeight: 600,
-                    marginTop: 32,
+                    margin: 0,
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
-
+                    alignSelf: aiReport ? 'flex-end' : 'center'
                   }}
                   onMouseEnter={(e) => {
                     e.target.style.transform = 'translateY(-2px)'
