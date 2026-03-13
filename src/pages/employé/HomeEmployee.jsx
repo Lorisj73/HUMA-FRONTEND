@@ -8,6 +8,7 @@ import SoleilNuageux from '@/media/logo_meteo/Soleil_nuageux.png'
 import Soleil from '@/media/logo_meteo/Soleil.png'
 import TeamScoreCard from '@/components/TeamScoreCard'
 import WeeklyChart from '@/components/WeeklyChart'
+import MascotteIdle from '@/media/mascotte/idle.png'
 import MoodRevealCard from '@/components/MoodRevealCard'
 import { checkTodayStatus, getCheckinHistory } from '../../services/checkinService'
 import { getTeamStats } from '../../services/teamService'
@@ -299,7 +300,7 @@ export default function HomeEmployee() {
               filter: 'drop-shadow(0px 2px 1px rgba(12, 12, 13, 0.05))'
             }}>
               <img 
-                src="/src/media/mascotte/idle.png" 
+                src={MascotteIdle} 
                 alt="Avatar mascotte" 
                 style={{ height: 80, width: 'auto' }}
               />
