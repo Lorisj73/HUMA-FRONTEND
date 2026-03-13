@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react'
 import logoWelcome from '../../media/logo_welcome.png'
+import onboardingIntroImage from '../../media/onboarding/image.png'
+import { login } from '../../services/authService'
+import { updateUserInfo, updateOnboarding } from '../../services/userService'
 
 // Background SVG component
 function OnboardingBackground() {
@@ -76,29 +79,163 @@ function Dots({ step, total }){
 
 export default function OnboardingEmployee({ onDone }) {
   const [step, setStep] = useState(0)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
+  const [postLoginStep, setPostLoginStep] = useState(3)
   const [prenom, setPrenom] = useState('')
   const [nom, setNom] = useState('')
   const [isManager, setIsManager] = useState(false)
   const [motivation, setMotivation] = useState(null)
   const [environnementTravail, setEnvironnementTravail] = useState(null)
   const [energieSources, setEnergieSources] = useState(null)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(()=>{
     // Avoid scrolling while onboarding? Could add logic later.
   },[])
 
-  const next = () => {
-    if(step < 7) {
+  const handleLogin = async () => {
+    if (!email || !email.trim()) {
+      setError('Veuillez entrer votre email')
+      return
+    }
+    if (!password || !password.trim()) {
+      setError('Veuillez entrer votre mot de passe')
+      return
+    }
+
+    setIsLoading(true)
+    setError('')
+
+    try {
+      const response = await login(email.trim(), password.trim())
+      console.log('Réponse login complète:', response)
+      
+      // Vérifier si l'onboarding est déjà complété
+      if (response.user && response.user.onboardingCompleted) {
+        console.log('Onboarding déjà complété, passage au dashboard')
+        // Sauvegarder les infos utilisateur
+        if (response.user.firstName) localStorage.setItem('huma_prenom', response.user.firstName)
+        if (response.user.lastName) localStorage.setItem('huma_nom', response.user.lastName)
+        
+        // Stocker le rôle (depuis response.user.role ou isManager)
+        const isManager = response.user.role === 'manager' || response.user.isManager
+        localStorage.setItem('huma_is_manager', isManager ? '1' : '0')
+        
+        localStorage.setItem('huma_onboarding_done', '1')
+        
+        // Terminer l'onboarding directement
+        onDone?.()
+        return
+      }
+      
+      let nextStepAfterLogin = 3
+
+      // Vérifier si l'utilisateur a déjà un firstName et lastName
+      if (response.user && response.user.firstName && response.user.lastName) {
+        // L'utilisateur a déjà ces informations, les sauvegarder et passer directement à l'étape 3
+        setPrenom(response.user.firstName)
+        setNom(response.user.lastName)
+        localStorage.setItem('huma_prenom', response.user.firstName)
+        localStorage.setItem('huma_nom', response.user.lastName)
+        
+        // Vérifier aussi si le rôle manager est déjà défini
+        const isManagerValue = response.user.role === 'manager' || response.user.isManager
+        if (response.user.role || response.user.isManager !== undefined) {
+          setIsManager(isManagerValue)
+          localStorage.setItem('huma_is_manager', isManagerValue ? '1' : '0')
+          // Si tout est déjà rempli, passer directement aux questions d'onboarding (étape 5)
+          nextStepAfterLogin = 5
+        } else {
+          // Sinon, passer à l'étape 4 pour demander le rôle
+          nextStepAfterLogin = 4
+        }
+      } else {
+        // L'utilisateur n'a pas encore ces infos, passer à l'étape 3 pour les demander
+        nextStepAfterLogin = 3
+      }
+
+      setPostLoginStep(nextStepAfterLogin)
+      setStep(2)
+    } catch (err) {
+      console.error('Erreur de connexion:', err)
+      setError('Impossible de se connecter. Veuillez réessayer.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const next = async () => {
+    if(step === 1) {
+      // L'utilisateur clique sur "Se connecter"
+      await handleLogin()
+      return
+    }
+
+    if(step === 2) {
+      setStep(postLoginStep)
+      return
+    }
+
+    if(step === 3) {
+      // Envoi des infos nom/prénom à l'API
+      if (!prenom.trim() || !nom.trim()) {
+        setError('Veuillez renseigner votre nom et prénom')
+        return
+      }
+
+      setIsLoading(true)
+      setError('')
+      try {
+        await updateUserInfo(prenom.trim(), nom.trim())
+        localStorage.setItem('huma_prenom', prenom.trim())
+        localStorage.setItem('huma_nom', nom.trim())
+        localStorage.setItem('huma_is_manager', isManager ? '1' : '0')
+        setStep(s => s + 1)
+      } catch (err) {
+        console.error('Erreur lors de la mise à jour du profil:', err)
+        setError('Impossible de sauvegarder votre profil. Veuillez réessayer.')
+      } finally {
+        setIsLoading(false)
+      }
+      return
+    }
+
+    if(step < 8) {
       setStep(s => s+1)
     } else {
-      localStorage.setItem('huma_prenom', prenom.trim())
-      localStorage.setItem('huma_nom', nom.trim())
-      localStorage.setItem('huma_is_manager', isManager ? '1' : '0')
-      localStorage.setItem('huma_onboarding_done','1')
-      if(motivation) localStorage.setItem('huma_motivation', motivation)
-      if(environnementTravail) localStorage.setItem('huma_environnement_travail', environnementTravail)
-      if(energieSources) localStorage.setItem('huma_energie_sources', energieSources)
-      onDone?.()
+      // Dernière étape : envoi des données d'onboarding à l'API
+      setIsLoading(true)
+      setError('')
+
+      try {
+        const onboardingData = {
+          workStyle: environnementTravail,
+          motivationType: motivation,
+          stressSource: energieSources
+        }
+
+        await updateOnboarding(onboardingData)
+
+        // Sauvegarder également dans localStorage
+        localStorage.setItem('huma_onboarding_done','1')
+        if(motivation) localStorage.setItem('huma_motivation', motivation)
+        if(environnementTravail) localStorage.setItem('huma_environnement_travail', environnementTravail)
+        if(energieSources) localStorage.setItem('huma_energie_sources', energieSources)
+
+        onDone?.()
+      } catch (err) {
+        console.error('Erreur lors de la sauvegarde de l\'onboarding:', err)
+        setError('Impossible de sauvegarder vos préférences. Veuillez réessayer.')
+        // Continuer quand même pour ne pas bloquer l'utilisateur
+        setTimeout(() => {
+          onDone?.()
+        }, 2000)
+      } finally {
+        setIsLoading(false)
+      }
     }
   }
 
@@ -106,8 +243,91 @@ export default function OnboardingEmployee({ onDone }) {
 
   return (
     <>
-      {(step === 0 || step === 3 || step === 4 || step === 5 || step === 6) && <OnboardingBackground />}
+      {(step === 0 || step === 4 || step === 5 || step === 6 || step === 7) && <OnboardingBackground />}
       <div style={{maxWidth:960, margin:'0 auto', padding:'40px 24px 40px'}}>
+        {step === 2 && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 'calc(100vh - 120px)'
+          }}>
+            <div style={{
+              background: 'rgba(255, 255, 255, 0.4)',
+              backdropFilter: 'blur(10px)',
+              borderRadius: 16,
+              padding: '32px 40px',
+              maxWidth: 800,
+              width: '100%',
+              textAlign: 'center'
+            }}>
+              <img
+                src={onboardingIntroImage}
+                alt="Introduction onboarding"
+                style={{
+                  width: '100%',
+                  height: 'auto',
+                  borderRadius: 12,
+                  display: 'block',
+                  marginBottom: 24
+                }}
+              />
+
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                marginBottom: 24
+              }}>
+                <div style={{
+                  width: 32,
+                  height: 8,
+                  borderRadius: 4,
+                  background: '#0748EA'
+                }} />
+                <div style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#D9D9D9'
+                }} />
+                <div style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#D9D9D9'
+                }} />
+                <div style={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  background: '#D9D9D9'
+                }} />
+              </div>
+
+              <button
+                className="btn primary"
+                onClick={next}
+                style={{
+                  width: '100%',
+                  background: '#0748EA',
+                  color: 'white',
+                  padding: '14px 32px',
+                  fontSize: 16,
+                  fontWeight: 500,
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  boxShadow: '0px 4px 8px rgba(7, 72, 234, 0.2)'
+                }}
+              >
+                Continuer
+              </button>
+            </div>
+          </div>
+        )}
+
         {step === 0 && (
           <div style={{
             background: 'rgba(255, 255, 255, 0.4)',
@@ -270,6 +490,9 @@ export default function OnboardingEmployee({ onDone }) {
                   <input 
                     type="email" 
                     placeholder="Entrez ton adresse e-mail professionnelle"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={isLoading}
                     style={{
                       width: '100%',
                       padding: '12px 16px 12px 44px',
@@ -284,6 +507,77 @@ export default function OnboardingEmployee({ onDone }) {
                     onFocus={(e) => e.target.style.borderColor = '#0748EA'}
                     onBlur={(e) => e.target.style.borderColor = '#D9D9D9'}
                   />
+                </div>
+              </div>
+
+              <div style={{textAlign: 'left', marginBottom: 24}}>
+                <label style={{
+                  display: 'block',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  marginBottom: 8,
+                  color: '#1E1E1E'
+                }}>
+                  Mot de passe
+                </label>
+                <div style={{position: 'relative'}}>
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{
+                    position: 'absolute',
+                    left: 16,
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    pointerEvents: 'none'
+                  }}>
+                    <path d="M12 7V5C12 4.20435 11.6839 3.44129 11.1213 2.87868C10.5587 2.31607 9.79565 2 9 2H7C6.20435 2 5.44129 2.31607 4.87868 2.87868C4.31607 3.44129 4 4.20435 4 5V7M3 14H13C13.5304 14 14.0391 13.7893 14.4142 13.4142C14.7893 13.0391 15 12.5304 15 12V9C15 8.46957 14.7893 7.96086 14.4142 7.58579C14.0391 7.21071 13.5304 7 13 7H3C2.46957 7 1.96086 7.21071 1.58579 7.58579C1.21071 7.96086 1 8.46957 1 9V12C1 12.5304 1.21071 13.0391 1.58579 13.4142C1.96086 13.7893 2.46957 14 3 14Z" stroke="#757575" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <input 
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Entrez votre mot de passe"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && email.trim() && password.trim() && !isLoading) next() }}
+                    disabled={isLoading}
+                    style={{
+                      width: '100%',
+                      padding: '12px 44px 12px 44px',
+                      fontSize: 14,
+                      border: '1px solid #D9D9D9',
+                      borderRadius: 8,
+                      background: 'white',
+                      color: '#1E1E1E',
+                      outline: 'none',
+                      transition: 'border-color 0.2s'
+                    }}
+                    onFocus={(e) => e.target.style.borderColor = '#0748EA'}
+                    onBlur={(e) => e.target.style.borderColor = '#D9D9D9'}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: 16,
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: 0,
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    {showPassword ? (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M1 8C1 8 3.5 3 8 3C12.5 3 15 8 15 8C15 8 12.5 13 8 13C3.5 13 1 8 1 8Z" stroke="#757575" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M8 10C9.10457 10 10 9.10457 10 8C10 6.89543 9.10457 6 8 6C6.89543 6 6 6.89543 6 8C6 9.10457 6.89543 10 8 10Z" stroke="#757575" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    ) : (
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path d="M6.5 6.5L9.5 9.5M9.5 6.5L6.5 9.5M1 8C1 8 3.5 3 8 3C12.5 3 15 8 15 8C15 8 12.5 13 8 13C3.5 13 1 8 1 8Z" stroke="#757575" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -312,68 +606,102 @@ export default function OnboardingEmployee({ onDone }) {
                 </label>
               </div>
 
+              {error && (
+                <div style={{
+                  marginBottom: 16,
+                  padding: '12px 16px',
+                  background: '#FFF0F0',
+                  border: '1px solid #FFB3B3',
+                  borderRadius: 8,
+                  color: '#D32F2F',
+                  fontSize: 14
+                }}>
+                  {error}
+                </div>
+              )}
+
               <button 
                 onClick={next}
+                disabled={!email.trim() || !password.trim() || isLoading}
                 style={{
                   width: '100%',
-                  background: '#0748EA',
+                  background: (!email.trim() || !password.trim() || isLoading) ? '#D9D9D9' : '#0748EA',
                   color: 'white',
                   padding: '14px 32px',
                   fontSize: 16,
                   fontWeight: 500,
                   border: 'none',
                   borderRadius: 8,
-                  cursor: 'pointer',
+                  cursor: (!email.trim() || !password.trim() || isLoading) ? 'not-allowed' : 'pointer',
                   boxShadow: '0px 4px 8px rgba(7, 72, 234, 0.2)',
                   transition: 'all 0.2s',
                   marginBottom: 24
                 }}
-                onMouseOver={(e) => e.target.style.background = '#0536C7'}
-                onMouseOut={(e) => e.target.style.background = '#0748EA'}
+                onMouseOver={(e) => {
+                  if (!(!email.trim() || !password.trim() || isLoading)) {
+                    e.target.style.background = '#0536C7'
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (!(!email.trim() || !password.trim() || isLoading)) {
+                    e.target.style.background = '#0748EA'
+                  }
+                }}
               >
-                Se connecter
+                {isLoading ? 'Connexion...' : 'Se connecter'}
               </button>
 
-              <div style={{
-                borderTop: '1px solid #D9D9D9',
-                paddingTop: 24,
-                fontSize: 14,
-                color: '#757575'
-              }}>
-                <p style={{margin: '0 0 8px'}}>
-                  Besoin d'un coup de main pour te connecter ?
-                </p>
-                <p style={{margin: 0}}>
-                  <a href="#" style={{
-                    color: '#303030',
-                    textDecoration: 'underline',
-                    fontSize: 14
-                  }}>
-                    Demander l'accès
-                  </a>
-                </p>
-              </div>
+            </div>
+          </div>
 
+          {/* Demo credentials box - bottom left */}
+          <div style={{
+            position: 'fixed',
+            bottom: 32,
+            left: 32,
+            background: 'rgba(255, 255, 255, 0.4)',
+            backdropFilter: 'blur(10px)',
+            borderRadius: 12,
+            padding: '20px 24px',
+            maxWidth: 320,
+            border: '1px solid rgba(255, 255, 255, 0.6)',
+            boxShadow: '0 4px 16px rgba(7, 72, 234, 0.08)',
+            zIndex: 10
+          }}>
+            <p style={{
+              margin: '0 0 12px',
+              fontSize: 13,
+              color: '#303030',
+              lineHeight: 1.5
+            }}>
+              À des fins de démonstration, des comptes de test ont été créés.
+            </p>
+            <div style={{display: 'flex', flexDirection: 'column', gap: 10}}>
               <div style={{
-                marginTop: 24,
-                paddingTop: 24,
-                borderTop: '1px solid #D9D9D9'
+                background: 'rgba(255, 255, 255, 0.6)',
+                borderRadius: 8,
+                padding: '10px 14px'
               }}>
-                <a href="#" style={{
-                  color: '#303030',
-                  textDecoration: 'underline',
-                  fontSize: 14
-                }}>
-                  Continuer sans SSO
-                </a>
+                <p style={{margin: '0 0 4px', fontSize: 12, color: '#757575', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em'}}>Manager</p>
+                <p style={{margin: '0 0 2px', fontSize: 13, color: '#1E1E1E'}}><span style={{color: '#757575'}}>Login :</span> manager2@local.test</p>
+                <p style={{margin: 0, fontSize: 13, color: '#1E1E1E'}}><span style={{color: '#757575'}}>Mdp :</span> adminadmin</p>
+              </div>
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.6)',
+                borderRadius: 8,
+                padding: '10px 14px'
+              }}>
+                <p style={{margin: '0 0 4px', fontSize: 12, color: '#757575', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.05em'}}>Employé</p>
+                <p style={{margin: '0 0 2px', fontSize: 13, color: '#1E1E1E'}}><span style={{color: '#757575'}}>Login :</span> employee06@local.test</p>
+                <p style={{margin: 0, fontSize: 13, color: '#1E1E1E'}}><span style={{color: '#757575'}}>Mdp :</span> adminadmin</p>
               </div>
             </div>
           </div>
         </>
       )}
 
-      {/* Step 2: Name Collection */}
-      {step === 2 && (
+      {/* Step 3: Name Collection */}
+      {step === 3 && (
         <>
           <OnboardingBackground />
           
@@ -534,42 +862,56 @@ export default function OnboardingEmployee({ onDone }) {
                 </div>
               </div>
 
+              {error && (
+                <div style={{
+                  marginBottom: 16,
+                  padding: '12px 16px',
+                  background: '#FFF0F0',
+                  border: '1px solid #FFB3B3',
+                  borderRadius: 8,
+                  color: '#D32F2F',
+                  fontSize: 14
+                }}>
+                  {error}
+                </div>
+              )}
+
               <button 
                 onClick={next}
-                disabled={!prenom.trim() || !nom.trim()}
+                disabled={!prenom.trim() || !nom.trim() || isLoading}
                 style={{
                   width: '100%',
-                  background: (!prenom.trim() || !nom.trim()) ? '#D9D9D9' : '#0748EA',
+                  background: (!prenom.trim() || !nom.trim() || isLoading) ? '#D9D9D9' : '#0748EA',
                   color: 'white',
                   padding: '14px 32px',
                   fontSize: 16,
                   fontWeight: 500,
                   border: 'none',
                   borderRadius: 8,
-                  cursor: (!prenom.trim() || !nom.trim()) ? 'not-allowed' : 'pointer',
-                  boxShadow: (!prenom.trim() || !nom.trim()) ? 'none' : '0px 4px 8px rgba(7, 72, 234, 0.2)',
+                  cursor: (!prenom.trim() || !nom.trim() || isLoading) ? 'not-allowed' : 'pointer',
+                  boxShadow: (!prenom.trim() || !nom.trim() || isLoading) ? 'none' : '0px 4px 8px rgba(7, 72, 234, 0.2)',
                   transition: 'all 0.2s'
                 }}
                 onMouseOver={(e) => {
-                  if(prenom.trim() && nom.trim()) {
+                  if(prenom.trim() && nom.trim() && !isLoading) {
                     e.target.style.background = '#0536C7'
                   }
                 }}
                 onMouseOut={(e) => {
-                  if(prenom.trim() && nom.trim()) {
+                  if(prenom.trim() && nom.trim() && !isLoading) {
                     e.target.style.background = '#0748EA'
                   }
                 }}
               >
-                Continuer
+                {isLoading ? 'Enregistrement...' : 'Continuer'}
               </button>
             </div>
           </div>
         </>
       )}
 
-      {/* Step 3: Comment ça marche? */}
-      {step === 3 && (
+      {/* Step 4: Comment ça marche? */}
+      {step === 4 && (
         <>
           <OnboardingBackground />
           
@@ -798,8 +1140,8 @@ export default function OnboardingEmployee({ onDone }) {
         </>
       )}
 
-      {/* Step 4: Questionnaire */}
-      {step === 4 && (
+      {/* Step 5: Questionnaire */}
+      {step === 5 && (
         <>
           <OnboardingBackground />
           
@@ -995,8 +1337,8 @@ export default function OnboardingEmployee({ onDone }) {
         </>
       )}
 
-      {/* Step 5: Questionnaire 3/3 - Sources d'énergie */}
-      {step === 5 && (
+      {/* Step 6: Questionnaire 3/3 - Sources d'énergie */}
+      {step === 6 && (
         <>
           <OnboardingBackground />
           
@@ -1191,8 +1533,8 @@ export default function OnboardingEmployee({ onDone }) {
         </>
       )}
 
-      {/* Step 6: Environnement de travail */}
-      {step === 6 && (
+      {/* Step 7: Environnement de travail */}
+      {step === 7 && (
         <>
           <OnboardingBackground />
           
@@ -1385,8 +1727,8 @@ export default function OnboardingEmployee({ onDone }) {
           </div>
         </>      )}
 
-      {/* Step 7: Félicitations */}
-      {step === 7 && (
+      {/* Step 8: Félicitations */}
+      {step === 8 && (
         <>
           <div style={{
             minHeight: '100vh',

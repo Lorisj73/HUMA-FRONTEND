@@ -3,6 +3,18 @@ import { Link, useLocation } from 'react-router-dom'
 
 export default function Navbar(){
   const location = useLocation()
+  const [userInitials, setUserInitials] = useState('CM')
+
+  // Récupérer les initiales de l'utilisateur
+  useEffect(() => {
+    const prenom = localStorage.getItem('huma_prenom') || ''
+    const nom = localStorage.getItem('huma_nom') || ''
+    
+    if (prenom && nom) {
+      const initiales = (prenom.charAt(0) + nom.charAt(0)).toUpperCase()
+      setUserInitials(initiales)
+    }
+  }, [])
 
   // Mapping des routes vers les noms d'onglets
   const getTabFromPath = (path) => {
@@ -198,7 +210,7 @@ export default function Navbar(){
             fontWeight: 600,
             transition: 'transform 0.2s'
           }}>
-            CM
+            {userInitials}
           </button>
         </div>
         )}

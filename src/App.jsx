@@ -1,24 +1,15 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import Header from './components/Header'
-import Home from './pages/Home'
-import Me from './pages/Me'
-import Nous from './pages/employé/Team'
+import HumaBackground from './components/HumaBackground'
 import OnboardingEmployee from './pages/employé/Onboarding'
 
-// Pages Employé
+// Pages unifiées (supportent employé et manager)
 import HomeEmployee from './pages/employé/HomeEmployee'
 import MeEmployee from './pages/employé/MeEmployee'
 import TeamEmployee from './pages/employé/Team'
 import FeedbacksEmployee from './pages/employé/FeedbacksEmployee'
 import CategoryDetail from './pages/employé/CategoryDetail'
-
-// Pages Manager
-import HomeManager from './pages/employeur/HomeManager'
-import MeManager from './pages/employeur/MeManager'
-import TeamManager from './pages/employeur/TeamManager'
-import FeedbacksManager from './pages/employeur/FeedbacksManager'
-import CategoryDetailManager from './pages/employeur/CategoryDetailManager'
 
 import Checkin from './pages/employé/Checkin'
 import CheckinStep2 from './pages/employé/CheckinStep2'
@@ -27,8 +18,16 @@ import CheckinStep3 from './pages/employé/CheckinStep3'
 // Composant Layout pour gérer la navbar et la logique onboarding
 function AppLayout() {
   const navigate = useNavigate()
-  const [showOnboarding, setShowOnboarding] = useState(true)
-  const [isManager, setIsManager] = useState(false)
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    // Ne pas afficher l'onboarding si déjà complété
+    const onboardingDone = localStorage.getItem('huma_onboarding_done')
+    const hasToken = localStorage.getItem('huma_auth_token')
+    // Ne montrer l'onboarding que si pas de token OU onboarding pas fait
+    return !hasToken || onboardingDone !== '1'
+  })
+  const [isManager, setIsManager] = useState(() => {
+    return localStorage.getItem('huma_is_manager') === '1'
+  })
 
   useEffect(() => {
     const managerStatus = localStorage.getItem('huma_is_manager')
@@ -44,13 +43,6 @@ function AppLayout() {
     }} />
   }
 
-  // Pages à afficher selon le rôle
-  const HomePage = isManager ? HomeManager : HomeEmployee
-  const MePage = isManager ? MeManager : MeEmployee
-  const TeamPage = isManager ? TeamManager : TeamEmployee
-  const FeedbacksPage = isManager ? FeedbacksManager : FeedbacksEmployee
-  const CategoryPage = isManager ? CategoryDetailManager : CategoryDetail
-
   return (
     <>
       <Header />
@@ -61,14 +53,14 @@ function AppLayout() {
           <Route path="/checkin/step2" element={<CheckinStep2 />} />
           <Route path="/checkin/step3" element={<CheckinStep3 />} />
 
-          {/* Routes principales */}
-          <Route path="/" element={<HomePage />} />
+          {/* Routes principales - Les pages détectent automatiquement si manager */}
+          <Route path="/" element={<HomeEmployee />} />
           <Route path="/accueil" element={<Navigate to="/" replace />} />
-          <Route path="/moi" element={<MePage />} />
-          <Route path="/nous" element={<TeamPage />} />
-          <Route path="/mon-equipe" element={<TeamPage />} />
-          <Route path="/feedbacks" element={<FeedbacksPage />} />
-          <Route path="/category/:categoryId" element={<CategoryPage />} />
+          <Route path="/moi" element={<MeEmployee />} />
+          <Route path="/nous" element={<TeamEmployee />} />
+          <Route path="/mon-equipe" element={<TeamEmployee />} />
+          <Route path="/feedbacks" element={<FeedbacksEmployee />} />
+          <Route path="/category/:categoryId" element={<CategoryDetail />} />
 
           {/* Route 404 */}
           <Route path="*" element={
@@ -85,6 +77,7 @@ function AppLayout() {
 export default function App() {
   return (
     <Router>
+      <HumaBackground />
       <AppLayout />
     </Router>
   )

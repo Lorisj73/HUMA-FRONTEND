@@ -1,65 +1,94 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { getFeedbacks } from '../../services/feedbackService'
 
 export default function CategoryDetail() {
   const navigate = useNavigate()
   const { categoryId } = useParams()
+  const [isManager, setIsManager] = useState(false)
+  const [feedbacks, setFeedbacks] = useState([])
+  const [isLoading, setIsLoading] = useState(true)
 
   // Décoder le nom de la catégorie depuis l'URL
   const category = categoryId ? { name: decodeURIComponent(categoryId) } : null
-  const [progress, setProgress] = useState(50)
+  const [progress, setProgress] = useState(0)
   const [active, setActive] = useState(0)
   const [isDown, setIsDown] = useState(false)
   const [startX, setStartX] = useState(0)
-  const [likes, setLikes] = useState({})
   const carouselRef = useRef(null)
 
-  // Données de feedbacks pour la catégorie (mock data)
-  const feedbacks = [
-    {
-      id: 1,
-      date: 'Il y a 2 jours',
-      text: 'Je propose qu\'on ajoute des plantes et de meilleures lampes dans l\'open space, c\'est un peu triste.',
-      status: 'Traité',
-      decision: 'Accepté',
-      decisionNote: 'Budget déco traité: 5 pk 8 nouvelles lampes commandées'
-    },
-    {
-      id: 2,
-      date: 'Il y a 5 jours',
-      text: 'On pourrait installer des casiers individuels pour ranger nos affaires personnelles.',
-      status: 'Nouveau',
-      decision: null,
-      decisionNote: null
-    },
-    {
-      id: 3,
-      date: 'Il y a 1 semaine',
-      text: 'Il serait bien d\'avoir une machine à café de meilleure qualité.',
-      status: 'Traité',
-      decision: 'Refusé',
-      decisionNote: 'Budget équipement déjà consommé pour ce trimestre, reétudiée en Q2'
-    },
-    {
-      id: 4,
-      date: 'Il y a 2 semaines',
-      text: 'Ajouter des prises électriques supplémentaires près des bureaux.',
-      status: 'En cours',
-      decision: null,
-      decisionNote: null
-    },
-    {
-      id: 5,
-      date: 'Il y a 3 semaines',
-      text: 'Créer une salle de détente avec des canapés confortables.',
-      status: 'Traité',
-      decision: 'Accepté',
-      decisionNote: 'Projet validé, livraison prévue fin janvier'
-    }
-  ]
+  // Vérifier si l'utilisateur est manager
+  useEffect(() => {
+    const managerStatus = localStorage.getItem('huma_is_manager')
+    setIsManager(managerStatus === '1')
+  }, [])
 
-  const speedWheel = 0.02
-  const speedDrag = -0.1
+  // Charger les feedbacks de la catégorie
+  useEffect(() => {
+    loadCategoryFeedbacks()
+  }, [categoryId])
+
+  const loadCategoryFeedbacks = async () => {
+    try {
+      setIsLoading(true)
+      const allFeedbacks = await getFeedbacks()
+      
+      // Filtrer les feedbacks par catégorie
+      const categoryName = decodeURIComponent(categoryId)
+      const filtered = allFeedbacks.filter(fb => fb.categoryLabel === categoryName)
+      
+      // Mapper les feedbacks au format attendu par le carrousel
+      const mapped = filtered.map(fb => ({
+        id: fb.id,
+        date: fb.date,
+        text: fb.feedbackText || fb.preview || '',
+        status: mapStatus(fb.status),
+        decision: null,
+        decisionNote: null
+      }))
+      
+      setFeedbacks(mapped)
+      setProgress(0) // Réinitialiser à la première carte
+      setActive(0)
+    } catch (error) {
+      console.error('Erreur lors du chargement des feedbacks:', error)
+      setFeedbacks([])
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  // Mapper les statuts backend vers frontend
+  const mapStatus = (status) => {
+    const statusMap = {
+      'pending': 'Nouveau',
+      'vu': 'Vu',
+      'en_cours': 'En cours',
+      'resolu': 'Traité',
+      'archive': 'Archivé'
+    }
+    return statusMap[status] || 'Nouveau'
+  }
+
+  // Formater la date en format lisible
+  const formatDate = (dateString) => {
+    if (!dateString) return ''
+    const date = new Date(dateString)
+    const now = new Date()
+    const diffTime = Math.abs(now - date)
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    
+    if (diffDays === 0) return 'Aujourd\'hui'
+    if (diffDays === 1) return 'Hier'
+    if (diffDays < 7) return `Il y a ${diffDays} jours`
+    if (diffDays < 14) return 'Il y a 1 semaine'
+    if (diffDays < 30) return `Il y a ${Math.floor(diffDays / 7)} semaines`
+    if (diffDays < 60) return 'Il y a 1 mois'
+    return `Il y a ${Math.floor(diffDays / 30)} mois`
+  }
+
+  const speedWheel = 0.5
+  const speedDrag = -0.3
 
   const getZindex = (array, index) => {
     return array.map((_, i) => (index === i) ? array.length : array.length - Math.abs(index - i))
@@ -100,31 +129,39 @@ export default function CategoryDetail() {
   }
 
   const handleItemClick = (index) => {
-    setProgress((index / feedbacks.length) * 100 + 10)
+    const targetProgress = feedbacks.length > 1 
+      ? (index / (feedbacks.length - 1)) * 100 
+      : 0
+    setProgress(targetProgress)
   }
 
   useEffect(() => {
     const carousel = carouselRef.current
-    if (!carousel) return
+    if (!carousel || feedbacks.length === 0) return
 
-    carousel.addEventListener('wheel', handleWheel, { passive: false })
-    carousel.addEventListener('mousedown', handleMouseDown)
-    carousel.addEventListener('mousemove', handleMouseMove)
-    carousel.addEventListener('mouseup', handleMouseUp)
-    carousel.addEventListener('touchstart', handleMouseDown)
-    carousel.addEventListener('touchmove', handleMouseMove)
-    carousel.addEventListener('touchend', handleMouseUp)
+    const wheelHandler = (e) => handleWheel(e)
+    const mouseDownHandler = (e) => handleMouseDown(e)
+    const mouseMoveHandler = (e) => handleMouseMove(e)
+    const mouseUpHandler = () => handleMouseUp()
+
+    carousel.addEventListener('wheel', wheelHandler, { passive: false })
+    carousel.addEventListener('mousedown', mouseDownHandler)
+    carousel.addEventListener('mousemove', mouseMoveHandler)
+    carousel.addEventListener('mouseup', mouseUpHandler)
+    carousel.addEventListener('touchstart', mouseDownHandler)
+    carousel.addEventListener('touchmove', mouseMoveHandler)
+    carousel.addEventListener('touchend', mouseUpHandler)
 
     return () => {
-      carousel.removeEventListener('wheel', handleWheel)
-      carousel.removeEventListener('mousedown', handleMouseDown)
-      carousel.removeEventListener('mousemove', handleMouseMove)
-      carousel.removeEventListener('mouseup', handleMouseUp)
-      carousel.removeEventListener('touchstart', handleMouseDown)
-      carousel.removeEventListener('touchmove', handleMouseMove)
-      carousel.removeEventListener('touchend', handleMouseUp)
+      carousel.removeEventListener('wheel', wheelHandler)
+      carousel.removeEventListener('mousedown', mouseDownHandler)
+      carousel.removeEventListener('mousemove', mouseMoveHandler)
+      carousel.removeEventListener('mouseup', mouseUpHandler)
+      carousel.removeEventListener('touchstart', mouseDownHandler)
+      carousel.removeEventListener('touchmove', mouseMoveHandler)
+      carousel.removeEventListener('touchend', mouseUpHandler)
     }
-  }, [isDown, startX])
+  }, [isDown, startX, feedbacks.length])
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -137,19 +174,10 @@ export default function CategoryDetail() {
     }
   }
 
-  const toggleLike = (feedbackId, e) => {
-    e.stopPropagation()
-    setLikes(prev => ({
-      ...prev,
-      [feedbackId]: !prev[feedbackId]
-    }))
-  }
-
   return (
     <div style={{
       height: '100vh',
       width: '100vw',
-      background: category?.gradient || 'linear-gradient(135deg, rgba(147, 197, 253, 0.3) 0%, rgba(219, 234, 254, 0.3) 100%)',
       position: 'fixed',
       top: 0,
       left: 0,
@@ -157,36 +185,39 @@ export default function CategoryDetail() {
       display: 'flex',
       flexDirection: 'column'
     }}>
+      {/* Bouton retour */}
+      <button
+        onClick={() => navigate('/feedbacks')}
+        style={{
+          position: 'absolute',
+          top: 120,
+          left: 48,
+          zIndex: 150,
+          background: 'rgba(255, 255, 255, 0.9)',
+          border: '1px solid rgba(0,0,0,0.1)',
+          borderRadius: 8,
+          padding: '12px 20px',
+          fontSize: 15,
+          fontWeight: 600,
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          color: 'var(--text)'
+        }}
+      >
+        ← Retour
+      </button>
+
       {/* Header */}
       <div style={{
         padding: '16px 48px',
+        paddingTop: 168,
+        paddingBottom: 32,
         position: 'relative',
-        zIndex: 0,
-        flexShrink: 0,
-        background: 'rgba(255, 255, 255, 0.2)',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)'
+        zIndex: 100,
+        flexShrink: 0
       }}>
-        <button
-          onClick={() => navigate('/feedbacks')}
-          style={{
-            background: 'rgba(255, 255, 255, 0.9)',
-            border: '1px solid rgba(0,0,0,0.1)',
-            borderRadius: 8,
-            padding: '12px 20px',
-            fontSize: 15,
-            fontWeight: 600,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 8,
-            color: 'var(--text)',
-            marginBottom: 24
-          }}
-        >
-          ← Retour
-        </button>
-
         <h1 style={{
           fontSize: 28,
           margin: '0 0 4px',
@@ -204,6 +235,34 @@ export default function CategoryDetail() {
         </p>
       </div>
 
+      {/* Message de chargement ou vide */}
+      {isLoading ? (
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'var(--text)',
+          fontSize: 16
+        }}>
+          Chargement...
+        </div>
+      ) : feedbacks.length === 0 ? (
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
+          gap: 12,
+          color: 'var(--text)'
+        }}>
+          <div style={{ fontSize: 48 }}>📭</div>
+          <div style={{ fontSize: 16, fontWeight: 600 }}>Aucun feedback dans cette catégorie</div>
+          <div style={{ fontSize: 14, color: '#6B7280' }}>Sois le premier à partager ton retour !</div>
+        </div>
+      ) : (
+        <>
       {/* Carrousel */}
       <div
         ref={carouselRef}
@@ -212,16 +271,16 @@ export default function CategoryDetail() {
           zIndex: 1,
           flex: 1,
           overflow: 'hidden',
-          pointerEvents: 'none'
+          pointerEvents: 'auto'
         }}
       >
         {feedbacks.map((feedback, index) => {
           const zIndex = getZindex(feedbacks, active)[index]
-          const activeValue = (index - active) / feedbacks.length
-          const x = activeValue * 300
-          const y = activeValue * 80
-          const rot = activeValue * 50
-          const opacity = zIndex / feedbacks.length * 3 - 2
+          const offset = index - active
+          const x = offset * 120
+          const y = Math.abs(offset) * 30
+          const rot = offset * 8
+          const opacity = Math.max(0.4, 1 - Math.abs(offset) * 0.2)
 
           return (
             <div
@@ -247,7 +306,6 @@ export default function CategoryDetail() {
                 left: '50%',
                 userSelect: 'none',
                 transformOrigin: '0% 100%',
-                boxShadow: '0 10px 50px 10px rgba(0, 0, 0, 0.2)',
                 background: 'rgba(255, 255, 255, 0.95)',
                 pointerEvents: 'all',
                 transform: `translate(var(--x), var(--y)) rotate(var(--rot))`,
@@ -349,49 +407,14 @@ export default function CategoryDetail() {
                 {/* Footer */}
                 <div style={{
                   display: 'flex',
-                  justifyContent: 'space-between',
+                  justifyContent: 'flex-start',
                   alignItems: 'center'
                 }}>
                   <div style={{
                     fontSize: 13,
                     color: '#9CA3AF'
                   }}>
-                    {feedback.date}
-                  </div>
-                  <div style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 12
-                  }}>
-                    <button
-                      onClick={(e) => toggleLike(feedback.id, e)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 6,
-                        padding: '6px 12px',
-                        borderRadius: 20,
-                        border: 'none',
-                        background: likes[feedback.id] ? '#ef4444' : 'rgba(0,0,0,0.05)',
-                        color: likes[feedback.id] ? 'white' : '#6B7280',
-                        fontSize: 13,
-                        fontWeight: 600,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!likes[feedback.id]) {
-                          e.currentTarget.style.background = 'rgba(0,0,0,0.1)'
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!likes[feedback.id]) {
-                          e.currentTarget.style.background = 'rgba(0,0,0,0.05)'
-                        }
-                      }}
-                    >
-                      {likes[feedback.id] ? '♥' : '♡'} Like
-                    </button>
+                    {formatDate(feedback.date)}
                   </div>
                 </div>
               </div>
@@ -401,21 +424,25 @@ export default function CategoryDetail() {
       </div>
 
       {/* Instructions */}
-      <div style={{
-        position: 'absolute',
-        bottom: 32,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        zIndex: 10,
-        background: 'rgba(255, 255, 255, 0.9)',
-        padding: '12px 24px',
-        borderRadius: 8,
-        fontSize: 14,
-        color: '#6B7280',
-        textAlign: 'center'
-      }}>
-        Utilisez la molette ou glissez pour naviguer entre les feedbacks
-      </div>
+      {!isLoading && feedbacks.length > 0 && (
+        <div style={{
+          position: 'absolute',
+          bottom: 32,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 10,
+          background: 'rgba(255, 255, 255, 0.9)',
+          padding: '12px 24px',
+          borderRadius: 8,
+          fontSize: 14,
+          color: '#6B7280',
+          textAlign: 'center'
+        }}>
+          Utilisez la molette ou glissez pour naviguer entre les feedbacks
+        </div>
+      )}
+      </>
+      )}
     </div>
   )
 }

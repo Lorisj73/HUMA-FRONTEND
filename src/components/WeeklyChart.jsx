@@ -1,26 +1,95 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
-const weekDays = ['L', 'M', 'M', 'J', 'V']
-const chartData = [
-  { day: 'L', value: 75, mood: 'Serein' },
-  { day: 'M', value: 82, mood: 'Épanoui' },
-  { day: 'M', value: 68, mood: 'Sous tension' },
-  { day: 'J', value: 72, mood: 'Serein' },
-  { day: 'V', value: 78, mood: 'Serein' },
-]
+const weekDaysLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
-export default function WeeklyChart() {
-  const [hoveredIndex, setHoveredIndex] = useState(2)
+const getMoodLabel = (moodValue) => {
+  if (!moodValue) return 'Absent'
+  if (moodValue <= 20) return 'Éprouvé'
+  if (moodValue <= 40) return 'Sous-tension'
+  if (moodValue <= 60) return 'Mitigé'
+  if (moodValue <= 80) return 'Serein'
+  return 'Épanoui'
+}
+
+export default function WeeklyChart({ data = [], period = 'Semaine' }) {
+  // Préparer les données du graphique à partir de l'historique
+  // data est un tableau d'objets { date, status, moodValue }
+  
+  const chartData = data.map((item, index) => {
+    const date = new Date(item.date)
+    let dayLabel = ''
+    
+    if (period === 'Semaine') {
+      const dayIndex = (date.getDay() + 6) % 7 // Convertir dimanche=0 en lundi=0
+      dayLabel = weekDaysLabels[dayIndex]
+    } else if (period === 'Mois') {
+      // Pour le mois, afficher "S1", "S2", "S3", "S4" pour les semaines
+      dayLabel = `S${index + 1}`
+    } else {
+      // Pour l'année, afficher les mois (J, F, M, A, M, J, J, A, S, O, N, D)
+      const monthLabels = ['J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D']
+      dayLabel = monthLabels[date.getMonth()]
+    }
+    
+    return {
+      day: dayLabel,
+      value: item.moodValue || 0,
+      mood: getMoodLabel(item.moodValue),
+      status: item.status,
+      date: item.date
+    }
+  })
+
+  const [hoveredIndex, setHoveredIndex] = useState(chartData.length > 0 ? chartData.length - 1 : null)
+
+  // Keep hovered index valid when period/data length changes.
+  useEffect(() => {
+    setHoveredIndex((prev) => {
+      if (chartData.length === 0) return null
+      if (prev === null || prev < 0) return chartData.length - 1
+      return Math.min(prev, chartData.length - 1)
+    })
+  }, [chartData.length])
   const maxValue = 100
   const chartHeight = 200
   const chartWidth = 500
   const padding = 40
 
+  // Si pas de données, ne rien afficher ou afficher un message
+  if (chartData.length === 0) {
+    return (
+      <div className="card" style={{ padding: '20px' }}>
+        <div style={{ marginBottom: '16px' }}>
+          <h2 style={{ 
+            fontSize: '18px', 
+            fontWeight: '700',
+            color: '#0f172a',
+            marginBottom: '2px'
+          }}>
+            {period === 'Semaine' ? 'Evolution sur la semaine' : period === 'Mois' ? 'Evolution sur le mois' : 'Evolution sur l\'année'}
+          </h2>
+          <p style={{ 
+            fontSize: '13px', 
+            color: '#94a3b8',
+            margin: 0
+          }}>
+            Aucune donnée disponible pour le moment
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   const points = chartData.map((d, i) => ({
-    x: padding + (i * (chartWidth - 2 * padding)) / (chartData.length - 1),
+    x: padding + (chartData.length > 1 ? (i * (chartWidth - 2 * padding)) / (chartData.length - 1) : (chartWidth - 2 * padding) / 2),
     y: chartHeight - padding - (d.value / maxValue) * (chartHeight - 2 * padding),
     ...d,
   }))
+
+  const safeHoveredIndex = hoveredIndex === null
+    ? null
+    : Math.min(Math.max(hoveredIndex, 0), points.length - 1)
+  const hoveredPoint = safeHoveredIndex === null ? null : points[safeHoveredIndex]
 
   const pathD = points.reduce((acc, point, i) => {
     if (i === 0) return `M ${point.x} ${point.y}`
@@ -32,6 +101,19 @@ export default function WeeklyChart() {
 
   const areaPath = `${pathD} L ${points[points.length - 1].x} ${chartHeight - padding} L ${points[0].x} ${chartHeight - padding} Z`
 
+  // Déterminer le titre selon la période
+  const getTitle = () => {
+    if (period === 'Semaine') return 'Evolution sur la semaine'
+    if (period === 'Mois') return 'Evolution sur le mois'
+    return 'Evolution sur l\'année'
+  }
+  
+  const getSubtitle = () => {
+    if (period === 'Semaine') return 'Tes humeurs quotidiennes cette semaine'
+    if (period === 'Mois') return 'Tes humeurs hebdomadaires ce mois'
+    return 'Tes humeurs mensuelles cette année'
+  }
+
   return (
     <div className="card" style={{ padding: '20px' }}>
       <div style={{ marginBottom: '16px' }}>
@@ -41,14 +123,14 @@ export default function WeeklyChart() {
           color: '#0f172a',
           marginBottom: '2px'
         }}>
-          Evolution sur la semaine
+          {getTitle()}
         </h2>
         <p style={{ 
           fontSize: '13px', 
           color: '#94a3b8',
           margin: 0
         }}>
-          Les humeurs quotidiennes de ton équipe cette semaine
+          {getSubtitle()}
         </p>
       </div>
 
@@ -86,11 +168,11 @@ export default function WeeklyChart() {
           <path d={pathD} fill="none" stroke="#5B7FFF" strokeWidth="3" strokeLinecap="round" />
 
           {/* Vertical line for hovered point */}
-          {hoveredIndex !== null && (
+          {hoveredPoint && (
             <line
-              x1={points[hoveredIndex].x}
-              y1={points[hoveredIndex].y}
-              x2={points[hoveredIndex].x}
+              x1={hoveredPoint.x}
+              y1={hoveredPoint.y}
+              x2={hoveredPoint.x}
               y2={chartHeight - padding}
               stroke="#9ca3af"
               strokeWidth="1"
@@ -104,7 +186,7 @@ export default function WeeklyChart() {
               <circle
                 cx={point.x}
                 cy={point.y}
-                r={hoveredIndex === i ? 8 : 6}
+                r={safeHoveredIndex === i ? 8 : 6}
                 fill="#5B7FFF"
                 stroke="white"
                 strokeWidth="3"
@@ -127,13 +209,13 @@ export default function WeeklyChart() {
               fill="#94a3b8"
               fontSize="14"
             >
-              {weekDays[i]}
+              {chartData[i]?.day || ''}
             </text>
           ))}
         </svg>
 
         {/* Tooltip */}
-        {hoveredIndex !== null && (
+        {hoveredPoint && safeHoveredIndex !== null && (
           <div
             style={{
               position: 'absolute',
@@ -144,8 +226,8 @@ export default function WeeklyChart() {
               border: '1px solid rgba(229, 231, 235, 0.5)',
               pointerEvents: 'none',
               transition: 'all 0.2s',
-              left: `${(points[hoveredIndex].x / chartWidth) * 100}%`,
-              top: `${((points[hoveredIndex].y - 20) / (chartHeight + 30)) * 100}%`,
+              left: `${(hoveredPoint.x / chartWidth) * 100}%`,
+              top: `${((hoveredPoint.y - 20) / (chartHeight + 30)) * 100}%`,
               transform: 'translate(-50%, -100%)',
             }}
           >
@@ -155,7 +237,7 @@ export default function WeeklyChart() {
               fontSize: '14px',
               margin: '0 0 2px 0'
             }}>
-              {chartData[hoveredIndex].mood}
+              {chartData[safeHoveredIndex]?.mood || 'Absent'}
             </p>
             <p style={{ 
               fontSize: '12px', 

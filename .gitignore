@@ -17,4 +17,3 @@ pnpm-debug.log*
 
 # Env files
 .env
-.env.*

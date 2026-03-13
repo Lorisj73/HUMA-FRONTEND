@@ -5,10 +5,15 @@ import { fileURLToPath, URL } from 'url'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: process.env.VERCEL ? '/' : '/HUMA-FRONTEND/', // Vercel = racine, GitHub Pages = sous-dossier
+  base: '/', // Base à la racine pour le développement local
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  test: {
+    globals: true,
+    environment: 'happy-dom',
+    setupFiles: './src/test/setup.js',
   }
 })
