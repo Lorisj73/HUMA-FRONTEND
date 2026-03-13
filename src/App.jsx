@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import Header from './components/Header'
+import HumaBackground from './components/HumaBackground'
 import OnboardingEmployee from './pages/employé/Onboarding'
 
 // Pages unifiées (supportent employé et manager)
@@ -76,6 +77,7 @@ function AppLayout() {
 export default function App() {
   return (
     <Router>
+      <HumaBackground />
       <AppLayout />
     </Router>
   )

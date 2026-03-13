@@ -80,14 +80,18 @@ export async function getCheckinHistory(days = 30) {
   }
 }
 
-// Récupérer le résumé hebdomadaire
-export async function getWeeklySummary(weekStart = null) {
+// Récupérer le résumé (week/month/year)
+export async function getWeeklySummary(weekStart = null, period = 'week', date = null) {
   try {
-    const params = weekStart ? `?weekStart=${weekStart}` : ''
-    const response = await api.get(`/checkins/weekly-summary${params}`)
+    const params = new URLSearchParams()
+    if (weekStart) params.append('weekStart', weekStart)
+    params.append('period', period.toLowerCase())
+    if (date) params.append('date', date)
+
+    const response = await api.get(`/checkins/weekly-summary?${params.toString()}`)
     return response
   } catch (error) {
-    console.error('Erreur lors de la récupération du résumé hebdomadaire:', error)
+    console.error('Erreur lors de la récupération du résumé:', error)
     throw error
   }
 }
@@ -96,8 +100,7 @@ export async function getWeeklySummary(weekStart = null) {
 export async function getMonthlySummary(date = null) {
   try {
     const dateParam = date || new Date().toISOString().slice(0, 7)
-    const response = await api.get(`/checkins/weekly-summary?period=month&date=${dateParam}`)
-    return response
+    return getWeeklySummary(null, 'month', dateParam)
   } catch (error) {
     console.error('Erreur lors de la récupération du résumé mensuel:', error)
     throw error
@@ -107,23 +110,26 @@ export async function getMonthlySummary(date = null) {
 // Récupérer le résumé annuel
 export async function getYearlySummary(year = null) {
   try {
-    const yearParam = year || new Date().getFullYear()
-    const response = await api.get(`/checkins/weekly-summary?period=year&date=${yearParam}`)
-    return response
+    const yearParam = String(year || new Date().getFullYear())
+    return getWeeklySummary(null, 'year', yearParam)
   } catch (error) {
     console.error('Erreur lors de la récupération du résumé annuel:', error)
     throw error
   }
 }
 
-// Récupérer les facteurs hebdomadaires
-export async function getWeeklyFactors(weekStart = null) {
+// Récupérer les facteurs (week/month/year)
+export async function getWeeklyFactors(weekStart = null, period = 'week', date = null) {
   try {
-    const params = weekStart ? `?weekStart=${weekStart}` : ''
-    const response = await api.get(`/checkins/weekly-factors${params}`)
+    const params = new URLSearchParams()
+    if (weekStart) params.append('weekStart', weekStart)
+    params.append('period', period.toLowerCase())
+    if (date) params.append('date', date)
+
+    const response = await api.get(`/checkins/weekly-factors?${params.toString()}`)
     return response
   } catch (error) {
-    console.error('Erreur lors de la récupération des facteurs hebdomadaires:', error)
+    console.error('Erreur lors de la récupération des facteurs:', error)
     throw error
   }
 }
@@ -132,8 +138,7 @@ export async function getWeeklyFactors(weekStart = null) {
 export async function getMonthlyFactors(date = null) {
   try {
     const dateParam = date || new Date().toISOString().slice(0, 7)
-    const response = await api.get(`/checkins/weekly-factors?period=month&date=${dateParam}`)
-    return response
+    return getWeeklyFactors(null, 'month', dateParam)
   } catch (error) {
     console.error('Erreur lors de la récupération des facteurs mensuels:', error)
     throw error
@@ -143,9 +148,8 @@ export async function getMonthlyFactors(date = null) {
 // Récupérer les facteurs annuels
 export async function getYearlyFactors(year = null) {
   try {
-    const yearParam = year || new Date().getFullYear()
-    const response = await api.get(`/checkins/weekly-factors?period=year&date=${yearParam}`)
-    return response
+    const yearParam = String(year || new Date().getFullYear())
+    return getWeeklyFactors(null, 'year', yearParam)
   } catch (error) {
     console.error('Erreur lors de la récupération des facteurs annuels:', error)
     throw error

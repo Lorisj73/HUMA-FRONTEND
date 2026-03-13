@@ -4,8 +4,8 @@ const weekDaysLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
 const getMoodLabel = (moodValue) => {
   if (!moodValue) return 'Absent'
-  if (moodValue <= 20) return 'Orageux'
-  if (moodValue <= 40) return 'Tendu'
+  if (moodValue <= 20) return 'Éprouvé'
+  if (moodValue <= 40) return 'Sous-tension'
   if (moodValue <= 60) return 'Mitigé'
   if (moodValue <= 80) return 'Serein'
   return 'Épanoui'

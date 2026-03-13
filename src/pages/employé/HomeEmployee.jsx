@@ -535,7 +535,7 @@ export default function HomeEmployee() {
             <div className="card" style={{display:'flex', flexDirection:'column', padding:'20px 24px'}}>
               <h2 style={{fontSize:18, margin:'0 0 8px', fontWeight:600}}>Ton humeur du jour</h2>
 
-              <div className="card panel" style={{
+              <div style={{
                 flex:1,
                 display:'flex',
                 flexDirection:'column',
@@ -572,8 +572,10 @@ export default function HomeEmployee() {
                   </div>
                 </div>
 
-                <p style={{fontSize:12, color:'#757575', margin:0, lineHeight:1.4, textAlign:'center'}}>
+                <p style={{fontSize:12, color:'#757575', margin:0, textAlign:'center'}}>
                   Apparaîtra ici après ton check-in
+                  <br />
+                  Données 100% anonymes
                 </p>
               </div>
             </div>

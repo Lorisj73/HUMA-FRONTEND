@@ -166,7 +166,7 @@ export default function FeedbacksEmployee() {
               key={index}
               className="card"
               style={{
-                background: category.gradient,
+                background: 'rgba(255, 255, 255, 0.4)',
                 padding: 24,
                 borderRadius: 16,
                 border: '1px solid rgba(255, 255, 255, 0.5)',
