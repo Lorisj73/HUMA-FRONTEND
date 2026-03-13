@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 const weekDaysLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D']
 
@@ -41,6 +41,15 @@ export default function WeeklyChart({ data = [], period = 'Semaine' }) {
   })
 
   const [hoveredIndex, setHoveredIndex] = useState(chartData.length > 0 ? chartData.length - 1 : null)
+
+  // Keep hovered index valid when period/data length changes.
+  useEffect(() => {
+    setHoveredIndex((prev) => {
+      if (chartData.length === 0) return null
+      if (prev === null || prev < 0) return chartData.length - 1
+      return Math.min(prev, chartData.length - 1)
+    })
+  }, [chartData.length])
   const maxValue = 100
   const chartHeight = 200
   const chartWidth = 500
@@ -76,6 +85,11 @@ export default function WeeklyChart({ data = [], period = 'Semaine' }) {
     y: chartHeight - padding - (d.value / maxValue) * (chartHeight - 2 * padding),
     ...d,
   }))
+
+  const safeHoveredIndex = hoveredIndex === null
+    ? null
+    : Math.min(Math.max(hoveredIndex, 0), points.length - 1)
+  const hoveredPoint = safeHoveredIndex === null ? null : points[safeHoveredIndex]
 
   const pathD = points.reduce((acc, point, i) => {
     if (i === 0) return `M ${point.x} ${point.y}`
@@ -154,11 +168,11 @@ export default function WeeklyChart({ data = [], period = 'Semaine' }) {
           <path d={pathD} fill="none" stroke="#5B7FFF" strokeWidth="3" strokeLinecap="round" />
 
           {/* Vertical line for hovered point */}
-          {hoveredIndex !== null && (
+          {hoveredPoint && (
             <line
-              x1={points[hoveredIndex].x}
-              y1={points[hoveredIndex].y}
-              x2={points[hoveredIndex].x}
+              x1={hoveredPoint.x}
+              y1={hoveredPoint.y}
+              x2={hoveredPoint.x}
               y2={chartHeight - padding}
               stroke="#9ca3af"
               strokeWidth="1"
@@ -172,7 +186,7 @@ export default function WeeklyChart({ data = [], period = 'Semaine' }) {
               <circle
                 cx={point.x}
                 cy={point.y}
-                r={hoveredIndex === i ? 8 : 6}
+                r={safeHoveredIndex === i ? 8 : 6}
                 fill="#5B7FFF"
                 stroke="white"
                 strokeWidth="3"
@@ -201,7 +215,7 @@ export default function WeeklyChart({ data = [], period = 'Semaine' }) {
         </svg>
 
         {/* Tooltip */}
-        {hoveredIndex !== null && (
+        {hoveredPoint && safeHoveredIndex !== null && (
           <div
             style={{
               position: 'absolute',
@@ -212,8 +226,8 @@ export default function WeeklyChart({ data = [], period = 'Semaine' }) {
               border: '1px solid rgba(229, 231, 235, 0.5)',
               pointerEvents: 'none',
               transition: 'all 0.2s',
-              left: `${(points[hoveredIndex].x / chartWidth) * 100}%`,
-              top: `${((points[hoveredIndex].y - 20) / (chartHeight + 30)) * 100}%`,
+              left: `${(hoveredPoint.x / chartWidth) * 100}%`,
+              top: `${((hoveredPoint.y - 20) / (chartHeight + 30)) * 100}%`,
               transform: 'translate(-50%, -100%)',
             }}
           >
@@ -223,7 +237,7 @@ export default function WeeklyChart({ data = [], period = 'Semaine' }) {
               fontSize: '14px',
               margin: '0 0 2px 0'
             }}>
-              {chartData[hoveredIndex].mood}
+              {chartData[safeHoveredIndex]?.mood || 'Absent'}
             </p>
             <p style={{ 
               fontSize: '12px', 

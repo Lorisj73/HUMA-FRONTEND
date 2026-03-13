@@ -4,6 +4,7 @@ import SoleilNuageux from '@/media/logo_meteo/Soleil_nuageux.png'
 import Nuageux from '@/media/logo_meteo/Nuageux.png'
 import Pluvieux from '@/media/logo_meteo/Pluvieux.png'
 import Orage from '@/media/logo_meteo/Orage.png'
+import MascotteIdle from '@/media/mascotte/idle.png'
 import WeeklyChart from '@/components/WeeklyChart'
 import { getCheckinHistory, getWeeklySummary, getWeeklyFactors } from '../../services/checkinService'
 import { getUserInfo } from '../../services/userService'
@@ -303,26 +304,50 @@ export default function MeEmployee() {
         {/* Titre résumé */}
         <div className="card" style={{ padding: isMobile ? '20px' : '32px', marginBottom: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
-              <circle cx="20" cy="20" r="20" fill="#0748EA"/>
-              <text x="20" y="26" textAnchor="middle" fill="white" fontSize="18" fontWeight="700">CC</text>
-            </svg>
             <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--text)' }}>
               Ta synthèse cette semaine
             </h2>
           </div>
 
-          <div style={{
-            background: 'var(--bg)',
-            padding: 20,
-            borderRadius: 12
-          }}>
-            <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px 0', color: 'var(--text)' }}>
-              Titre résumé
-            </h3>
-            <p style={{ fontSize: 14, color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>
-              Lorem ipsum dolor sit amet consectetur. Porta lobortis urna dignissim proin leo libero. Nulla tellus ornare vulputate eget sodales. Ut proin nunc nibh enim neque mattis. Sed nunc varius lorem accumsan enim.
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 18 }}>
+            <img
+              src={MascotteIdle}
+              alt="Mascotte HUMA"
+              style={{
+                width: isMobile ? 58 : 72,
+                height: isMobile ? 58 : 72,
+                objectFit: 'contain',
+                flexShrink: 0
+              }}
+            />
+
+            <div style={{
+              position: 'relative',
+              background: '#F2F6FF',
+              padding: isMobile ? '14px 16px' : '16px 20px',
+              borderRadius: 10,
+              border: '1px solid #C8D9FC',
+              flex: 1
+            }}>
+              <div style={{
+                position: 'absolute',
+                left: -7,
+                top: '50%',
+                width: 14,
+                height: 14,
+                background: '#D7DEE9',
+                borderLeft: '1px solid #B9C8EE',
+                borderBottom: '1px solid #B9C8EE',
+                transform: 'translateY(-50%) rotate(45deg)'
+              }} />
+
+              <h3 style={{ fontSize: isMobile ? 20 : 20, fontWeight: 700, margin: '0 0 10px 0', color: '#2F2F33', lineHeight: 1.1 }}>
+                Semaine globalement positive
+              </h3>
+              <p style={{ fontSize: isMobile ? 14 : 16, color: '#2F2F33', margin: 0, lineHeight: 1.4 }}>
+                Ta semaine montre une dynamique stable avec une humeur moyenne de 8/10 et une participation solide (4 check-ins sur 5). Un léger creux apparaît en milieu de semaine, lié à la charge et à ton rythme de travail, avant un retour à un climat plus serein. Globalement, les ressentis dominants restent positifs et témoignent d'une semaine plutôt équilibrée.
+              </p>
+            </div>
           </div>
         </div>
 
@@ -351,8 +376,8 @@ export default function MeEmployee() {
                   style={{
                     padding: '8px 16px',
                     borderRadius: 20,
-                    border: selectedPeriod === period ? '1px solid #1E1E1E' : '1px solid #D9D9D9',
-                    background: selectedPeriod === period ? '#1E1E1E' : 'white',
+                    border: selectedPeriod === period ? '1px solid #0748EA' : '1px solid #D9D9D9',
+                    background: selectedPeriod === period ? '#0748EA' : 'white',
                     color: selectedPeriod === period ? 'white' : '#757575',
                     fontSize: 14,
                     cursor: 'pointer',

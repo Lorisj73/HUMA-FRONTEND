@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { getUserInfo } from '../services/userService'
+import logoEcrit from '../media/logos/logo-ecrit.png'
 
 export default function Header() {
   const location = useLocation()
@@ -65,7 +66,7 @@ export default function Header() {
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         borderRadius: 64,
-        padding: '16px 32px',
+        padding: '12px 32px',
         display: 'flex',
         alignItems: 'center',
         gap: 32,
@@ -73,7 +74,7 @@ export default function Header() {
         boxShadow: isDarkMode ? '0 4px 24px rgba(0, 0, 0, 0.3)' : '0 4px 24px rgba(0, 0, 0, 0.08)',
         pointerEvents: 'auto'
       }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: isDarkMode ? '#f1f5f9' : '#1E1E1E' }}>HUMA</div>
+        <img src={logoEcrit} alt="HUMA" style={{ height: 36, width: 'auto' }} />
         <nav style={{ display: 'flex', gap: 24 }}>
           <Link to="/" style={{ 
             color: currentTab === 'Accueil' ? (isDarkMode ? '#f1f5f9' : '#1E1E1E') : (isDarkMode ? '#94a3b8' : '#64748b'), 
@@ -196,7 +197,7 @@ export default function Header() {
           width: 40,
           height: 40,
           borderRadius: '50%',
-          background: '#1E1E1E',
+          background: '#0748EA',
           color: 'white',
           display: 'flex',
           alignItems: 'center',

@@ -73,6 +73,22 @@ export async function getWeeklyFactors(teamId = null, period = 'week', date = nu
   }
 }
 
+// Recuperer l'insight hebdomadaire IA de l'equipe
+export async function getWeeklyInsight(teamId = null, weekStart = null) {
+  try {
+    const params = new URLSearchParams()
+    if (teamId) params.append('teamId', teamId)
+    if (weekStart) params.append('weekStart', weekStart)
+
+    const queryString = params.toString()
+    const response = await api.get(`/team/weekly-insight${queryString ? `?${queryString}` : ''}`)
+    return response
+  } catch (error) {
+    console.error('Erreur lors de la recuperation de l\'insight hebdomadaire:', error)
+    throw error
+  }
+}
+
 // Générer un rapport d'analyse hebdomadaire IA pour les managers
 export async function generateWeeklyAnalysisReport(teamId = null, weekStart = null) {
   try {

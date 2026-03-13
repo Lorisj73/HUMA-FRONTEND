@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
-import Soleil from '@/media/logo_meteo/Soleil.png'
-import SoleilNuageux from '@/media/logo_meteo/Soleil_nuageux.png'
+import MascotteIdle from '@/media/mascotte/idle.png'
 import HumaLoading from '@/media/HUMA-loading.gif'
-import { getTeamStats, getWeeklySummary, getWeeklyFactors, generateWeeklyAnalysisReport } from '../../services/teamService'
+import WeeklyChart from '@/components/WeeklyChart'
+import { getTeamStats, getWeeklySummary, getWeeklyFactors, getWeeklyInsight, generateWeeklyAnalysisReport } from '../../services/teamService'
 
 // Mapping des causes anglaises vers français
 const CAUSE_LABELS = {
@@ -13,6 +13,8 @@ const CAUSE_LABELS = {
   'RECOGNITION': 'Reconnaissance',
   'BALANCE': 'Équilibre pro/perso'
 }
+
+const ALL_CAUSES = ['WORKLOAD', 'RELATIONS', 'MOTIVATION', 'CLARITY', 'RECOGNITION', 'BALANCE']
 
 export default function Nous() {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
@@ -25,6 +27,7 @@ export default function Nous() {
   const [teamStats, setTeamStats] = useState(null)
   const [weeklySummary, setWeeklySummary] = useState(null)
   const [weeklyFactors, setWeeklyFactors] = useState(null)
+  const [weeklyInsight, setWeeklyInsight] = useState(null)
   const [aiReport, setAiReport] = useState(null)
   
   // Référence pour le scroll automatique
@@ -63,10 +66,11 @@ export default function Nous() {
       const period = periodMap[selectedPeriod] || 'week'
 
       // Charger les données en parallèle
-      const [stats, summary, factors] = await Promise.all([
+      const [stats, summary, factors, insight] = await Promise.all([
         getTeamStats(),
         getWeeklySummary(null, period),
-        getWeeklyFactors(null, period)
+        getWeeklyFactors(null, period),
+        getWeeklyInsight()
       ])
 
       console.log('Team stats:', stats)
@@ -76,6 +80,7 @@ export default function Nous() {
       setTeamStats(stats)
       setWeeklySummary(summary)
       setWeeklyFactors(factors)
+      setWeeklyInsight(insight)
     } catch (error) {
       console.error('Erreur lors du chargement des données:', error)
     } finally {
@@ -122,45 +127,114 @@ export default function Nous() {
   }
 
   // Calculer les valeurs à partir des données API
-  const teamScore = teamStats?.globalScore ? (teamStats.globalScore / 10).toFixed(1) : 0
-  const moodLabel = teamStats?.moodLabel || 'Chargement...'
+  const teamScore = weeklySummary?.dashboard?.qvtBarometer?.value ?? 0
+  const insightAverageMood = weeklyInsight?.metrics?.averageMood
+  const insightTopCauses = weeklyInsight?.metrics?.topCauses || []
+  const insightParticipationRate = weeklyInsight?.metrics?.participationRate || 0
+  const insightParticipation = weeklyInsight?.metrics?.participation || 0
+
+  const climateTitle = insightAverageMood !== null && insightAverageMood !== undefined
+    ? `Moyenne hebdo: ${String(insightAverageMood).replace('.', ',')}/10`
+    : weeklyInsight?.generated
+      ? 'Synthèse hebdomadaire de l\'équipe'
+      : 'Pas de synthèse disponible'
+
+  const climateDescription = weeklyInsight?.summaryText || (
+    insightTopCauses.length > 0
+      ? `Les principales influences sont : ${insightTopCauses.slice(0, 3).map(cause => CAUSE_LABELS[cause] || cause).join(', ')}.`
+      : 'Pas encore de données disponibles pour cette semaine.'
+  )
   
-  // Distribution des humeurs (depuis les stats)
-  const distribution = teamStats?.distribution || {}
-  
-  // Facteurs d'influence (depuis weeklyFactors) - convertir en pourcentage
-  const totalCount = weeklyFactors?.summary?.count || 0
-  const influenceFactors = weeklyFactors?.availableCauses?.map(cause => {
-    const data = weeklyFactors.byCause[cause]
-    const count = data?.count || 0
-    const percentage = totalCount > 0 ? Math.round((count / totalCount) * 100) : 0
-    return {
-      label: CAUSE_LABELS[cause] || cause,
-      value: percentage
+  // Adapter les donnees API equipe au format attendu par WeeklyChart (comme dans la page Moi)
+  const teamChartData = (() => {
+    const daily = weeklySummary?.daily || []
+    if (daily.length === 0) return []
+    const now = new Date()
+    const todayLocal = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    const currentYearMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+
+    if (selectedPeriod === 'Semaine') {
+      return daily.map((item) => ({
+        date: item.date,
+        status: item.moodValue !== null && item.moodValue !== undefined ? 'completed' : 'missing',
+        moodValue: item.moodValue ?? 0
+      }))
     }
-  }).sort((a, b) => b.value - a.value) || [
-    { label: 'Charge / Rythme', value: 0 },
-    { label: 'Relations / Ambiance', value: 0 },
-    { label: 'Sens / Motivation', value: 0 },
-    { label: 'Organisation / Clarté', value: 0 },
-    { label: 'Reconnaissance', value: 0 },
-    { label: 'Équilibre pro/perso', value: 0 }
-  ]
+
+    if (selectedPeriod === 'Mois') {
+      // Ne pas afficher les jours futurs du mois en cours.
+      const visibleDaily = daily.filter((item) => item.date <= todayLocal)
+      if (visibleDaily.length === 0) return []
+
+      const groupedByWeek = {}
+
+      visibleDaily.forEach((item) => {
+        const date = new Date(item.date)
+        const weekOfMonth = Math.floor((date.getDate() - 1) / 7)
+        if (!groupedByWeek[weekOfMonth]) groupedByWeek[weekOfMonth] = []
+        groupedByWeek[weekOfMonth].push(item)
+      })
+
+      return Object.keys(groupedByWeek)
+        .sort((a, b) => Number(a) - Number(b))
+        .map((weekKey) => {
+          const items = groupedByWeek[weekKey]
+          const completed = items.filter((entry) => entry.moodValue !== null && entry.moodValue !== undefined)
+
+          if (completed.length > 0) {
+            const avgMood = completed.reduce((sum, entry) => sum + entry.moodValue, 0) / completed.length
+            return {
+              date: items[0].date,
+              status: 'completed',
+              moodValue: Math.round(avgMood)
+            }
+          }
+
+          return {
+            date: items[0].date,
+            status: 'missing',
+            moodValue: 0
+          }
+        })
+    }
+
+    // Annee: l'API renvoie averageMood sur 10, WeeklyChart attend moodValue sur 100
+    // Ne pas afficher les mois futurs de l'annee en cours.
+    return daily
+      .filter((item) => item.month <= currentYearMonth)
+      .map((item) => ({
+      date: `${item.month}-01`,
+      status: item.averageMood !== null && item.averageMood !== undefined ? 'completed' : 'missing',
+      moodValue: item.averageMood !== null && item.averageMood !== undefined ? Math.round(item.averageMood * 10) : 0
+      }))
+  })()
+
+  // Facteurs d'influence: afficher les 6 causes, meme si absentes de la reponse.
+  // Le backend expose les volumes par cause dans byCause[cause].totalCheckins.
+  const causeMentions = ALL_CAUSES.reduce((acc, cause) => {
+    acc[cause] = weeklyFactors?.byCause?.[cause]?.totalCheckins || 0
+    return acc
+  }, {})
+  const totalCauseMentions = Object.values(causeMentions).reduce((sum, value) => sum + value, 0)
+
+  const influenceFactors = ALL_CAUSES.map((cause) => {
+    const count = causeMentions[cause] || 0
+    const percentage = totalCauseMentions > 0 ? Math.round((count / totalCauseMentions) * 100) : 0
+    return {
+      cause,
+      label: CAUSE_LABELS[cause] || cause,
+      value: percentage,
+      count
+    }
+  })
 
   // Stats basées sur le résumé hebdomadaire
   const stats = weeklySummary?.stats || {}
-  const excellentDays = stats.excellent || 0
-  const goodDays = stats.good || 0
-  const difficultDays = stats.difficult || 0
+  const excellentDays = stats.excellentDays || 0
+  const goodDays = stats.correctDays || 0
+  const difficultDays = stats.difficultDays || 0
   
-  const tags = weeklyFactors?.availableCauses?.map(cause => CAUSE_LABELS[cause] || cause) || [
-    'Charge / Rythme', 
-    'Relations / Ambiance', 
-    'Sens / Motivation', 
-    'Organisation / Clarté', 
-    'Reconnaissance', 
-    'Équilibre pro/perso'
-  ]
+  const tags = ALL_CAUSES.map(cause => CAUSE_LABELS[cause])
 
   // Calcul de la position du curseur sur la jauge (score de 0 à 10)
   const calculateCursorPosition = (score) => {
@@ -182,98 +256,8 @@ export default function Nous() {
     return { x, y }
   }
 
-  const cursorPos = calculateCursorPosition(teamScore)
-
-  // Générer les labels de l'axe X en fonction de la période
-  const getChartLabels = () => {
-    if (!weeklySummary?.daily || weeklySummary.daily.length === 0) {
-      // Valeurs par défaut si pas de données
-      switch (selectedPeriod) {
-        case 'Semaine':
-          return ['L', 'M', 'M', 'J', 'V']
-        case 'Mois':
-          return []
-        case 'Année':
-          return ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
-        default:
-          return []
-      }
-    }
-
-    const daily = weeklySummary.daily
-
-    switch (selectedPeriod) {
-      case 'Semaine':
-        // Afficher les jours de la semaine (L, M, M, J, V)
-        return ['L', 'M', 'M', 'J', 'V']
-      
-      case 'Mois':
-        // Pour le mois, créer un tableau avec des labels pour certains jours seulement
-        // Afficher un label tous les ~5 jours pour éviter la surcharge
-        const step = Math.ceil(daily.length / 6)
-        return daily.map((d, i) => {
-          if (i === 0 || i === daily.length - 1 || i % step === 0) {
-            const date = new Date(d.date)
-            return date.getDate().toString()
-          }
-          return '' // Label vide pour les autres jours
-        })
-      
-      case 'Année':
-        // Pour l'année, afficher les mois
-        return daily.map(d => {
-          const monthNames = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc']
-          const monthIndex = parseInt(d.month.split('-')[1]) - 1
-          return monthNames[monthIndex]
-        })
-      
-      default:
-        return []
-    }
-  }
-
-  // Générer les chemins SVG à partir des données daily
-  const generateChartPaths = () => {
-    if (!weeklySummary?.daily || weeklySummary.daily.length === 0) {
-      return { teamPath: '', teamPoints: [] }
-    }
-
-    const daily = weeklySummary.daily
-    const svgWidth = 600
-    const svgHeight = 200
-    const padding = 60
-    const chartWidth = svgWidth - 2 * padding
-    
-    // Calculer les coordonnées X et Y pour chaque point
-    const points = daily.map((day, index) => {
-      // Pour l'année, on utilise averageMood, sinon moodValue
-      let value = selectedPeriod === 'Année' ? day.averageMood : day.moodValue
-      
-      // Si pas de valeur, utiliser une valeur moyenne
-      if (value === null || value === undefined) {
-        value = 50 // Valeur par défaut au milieu
-      }
-      
-      // Pour semaine/mois: moodValue est 0-100, on le convertit en 0-10
-      // Pour année: averageMood est déjà 0-10
-      const normalizedValue = selectedPeriod === 'Année' ? value : value / 10
-      
-      const x = padding + (index * chartWidth) / Math.max(daily.length - 1, 1)
-      // Inverser Y: 10 = haut (y petit), 0 = bas (y grand)
-      const y = svgHeight - (normalizedValue / 10) * svgHeight + 10
-      
-      return { x, y, value: normalizedValue }
-    })
-
-    // Générer le path SVG (ligne simple)
-    const teamPath = points.map((p, i) => 
-      `${i === 0 ? 'M' : 'L'} ${p.x},${p.y}`
-    ).join(' ')
-
-    return { teamPath, teamPoints: points }
-  }
-
-  const { teamPath, teamPoints } = generateChartPaths()
+  const clampedTeamScore = Math.max(0, Math.min(10, Number(teamScore) || 0))
+  const cursorPos = calculateCursorPosition(clampedTeamScore)
 
   // Afficher un indicateur de chargement
   if (isLoading) {
@@ -346,169 +330,155 @@ export default function Nous() {
           )}
         </div>
 
-        {/* Grille principale : Climat + Score */}
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
-          gap: 20,
-          marginBottom: 20
-        }}>
-          {/* Carte Climat de l'équipe */}
-          <div className="card" style={{ padding: isMobile ? '20px' : '32px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
-              <div>
-                <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--text)', marginBottom: 4 }}>
-                  Climat de l'équipe
-                </h2>
-                <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-                  Aujourd'hui
-                </p>
-              </div>
-              <img src={SoleilNuageux} alt="Météo" style={{ width: '60px', height: '60px' }} />
-            </div>
+        {/* Carte Climat de l'equipe (seule sur sa ligne) */}
+        <div className="card" style={{ padding: isMobile ? '20px' : '32px', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--text)' }}>
+              Synthese de la semaine
+            </h2>
+          </div>
 
-            {/* Titre résumé */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 18 }}>
+            <img
+              src={MascotteIdle}
+              alt="Mascotte HUMA"
+              style={{
+                width: isMobile ? 58 : 72,
+                height: isMobile ? 58 : 72,
+                objectFit: 'contain',
+                flexShrink: 0
+              }}
+            />
+
             <div style={{
-              background: 'var(--bg)',
-              padding: 20,
-              borderRadius: 12
+              position: 'relative',
+              background: '#F2F6FF',
+              padding: isMobile ? '14px 16px' : '16px 20px',
+              borderRadius: 10,
+              border: '1px solid #C8D9FC',
+              flex: 1
             }}>
-              <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 12px 0', color: 'var(--text)' }}>
-                {moodLabel}
+              <div style={{
+                position: 'absolute',
+                left: -7,
+                top: '50%',
+                width: 14,
+                height: 14,
+                background: '#D7DEE9',
+                borderLeft: '1px solid #B9C8EE',
+                borderBottom: '1px solid #B9C8EE',
+                transform: 'translateY(-50%) rotate(45deg)'
+              }} />
+
+              <h3 style={{ fontSize: isMobile ? 20 : 20, fontWeight: 700, margin: '0 0 10px 0', color: '#2F2F33', lineHeight: 1.1 }}>
+                {climateTitle}
               </h3>
-              <p style={{ fontSize: 14, color: 'var(--text)', margin: 0, lineHeight: 1.6 }}>
-                {Object.keys(distribution).length > 0 
-                  ? `Les principales influences sont : ${Object.keys(distribution).slice(0, 3).map(cause => CAUSE_LABELS[cause] || cause).join(', ')}.`
-                  : 'Pas encore de données disponibles pour aujourd\'hui.'}
+              <p style={{ fontSize: isMobile ? 14 : 16, color: '#2F2F33', margin: 0, lineHeight: 1.4 }}>
+                {climateDescription}
               </p>
             </div>
           </div>
+        </div>
 
-          {/* Carte Score bien-être */}
-          <div className="card" style={{ padding: isMobile ? '20px' : '32px' }}>
-            <div style={{ marginBottom: 20 }}>
-              <h2 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--text)', marginBottom: 4 }}>
-                Score bien-être de ton équipe
-              </h2>
-              <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>
-                Depuis le début d'année
-              </p>
+        {/* Ligne KPI : Humeur, Participation, Barometre QVT */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)',
+          gap: 16,
+          marginBottom: 20
+        }}>
+          <div className="card" style={{ padding: isMobile ? '20px' : '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: '#0748EA',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18
+              }}>☀</div>
+              <h3 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--text)' }}>Humeur moyenne</h3>
             </div>
+            <div style={{ fontSize: 44, fontWeight: 700, color: 'var(--text)', lineHeight: 1, marginBottom: 6 }}>
+              {insightAverageMood !== null && insightAverageMood !== undefined ? String(insightAverageMood).replace('.', ',') : '--'}
+              <span style={{ fontSize: 30, fontWeight: 400, color: 'var(--muted)' }}>/10</span>
+            </div>
+            <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>Moyenne sur la semaine</p>
+          </div>
 
-            {/* Jauge semi-circulaire */}
-            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-              <div style={{ position: 'relative', width: 240, height: 160 }}>
-                <svg width="240" height="120" viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <div className="card" style={{ padding: isMobile ? '20px' : '24px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <div style={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                background: '#0748EA',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 18
+              }}>✦</div>
+              <h3 style={{ fontSize: 22, fontWeight: 700, margin: 0, color: 'var(--text)' }}>Participation</h3>
+            </div>
+            <div style={{ fontSize: 44, fontWeight: 700, color: 'var(--text)', lineHeight: 1, marginBottom: 6 }}>
+              {insightParticipationRate}
+              <span style={{ fontSize: 30, fontWeight: 400, color: 'var(--muted)' }}> %</span>
+            </div>
+            <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0 }}>{insightParticipation} reponses actives cette semaine</p>
+          </div>
+
+          <div className="card" style={{ padding: isMobile ? '20px' : '24px' }}>
+            <h3 style={{ fontSize: 22, fontWeight: 700, margin: '0 0 12px 0', color: '#1A1F36' }}>
+              Barometre QVT equipe
+            </h3>
+
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 8 }}>
+              <div style={{ position: 'relative', width: 220, height: 120 }}>
+                <svg width="220" height="110" viewBox="0 0 240 120" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <defs>
-                    {/* Gradient arc-en-ciel pour la jauge */}
-                    <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#EC221F" />
-                      <stop offset="20%" stopColor="#FF7E1D" />
-                      <stop offset="40%" stopColor="#FFCE00" />
-                      <stop offset="60%" stopColor="#90B5F4" />
-                      <stop offset="100%" stopColor="#0748EA" />
+                    <linearGradient id="qvtBlueGradient" x1="35" y1="100" x2="205" y2="100" gradientUnits="userSpaceOnUse">
+                      <stop offset="0%" stopColor="#DCE7FD" />
+                      <stop offset="60%" stopColor="#8FB0F2" />
+                      <stop offset="100%" stopColor="#1D4ED8" />
                     </linearGradient>
-                    
-                    {/* Ombre pour le point */}
-                    <filter id="pointShadow" x="-50%" y="-50%" width="200%" height="200%">
-                      <feDropShadow dx="0" dy="2" stdDeviation="2" floodOpacity="0.15"/>
-                    </filter>
                   </defs>
-                  
-                  {/* Arc de la jauge - demi-cercle */}
+
+                  {/* Arc degrade bleu */}
                   <path
                     d="M 35,100 A 85,85 0 0,1 205,100"
                     fill="none"
-                    stroke="url(#gaugeGradient)"
+                    stroke="url(#qvtBlueGradient)"
                     strokeWidth="12"
                     strokeLinecap="round"
                   />
-                  
-                  {/* Ligne de base blanche (optionnelle) */}
-                  <line x1="35" y1="100" x2="205" y2="100" stroke="white" strokeWidth="1" opacity="0.5"/>
-                  
-                  {/* Point indicateur de position */}
-                  <g filter="url(#pointShadow)">
-                    <circle
-                      cx={cursorPos.x}
-                      cy={cursorPos.y}
-                      r="9"
-                      fill="#2C2C2C"
-                    />
-                    <circle
-                      cx={cursorPos.x}
-                      cy={cursorPos.y}
-                      r="6"
-                      fill="none"
-                      stroke="white"
-                      strokeWidth="2.5"
-                    />
-                  </g>
+
+                  {/* Curseur */}
+                  <circle cx={cursorPos.x} cy={cursorPos.y} r="9" fill="#2C2C2C" />
+                  <circle cx={cursorPos.x} cy={cursorPos.y} r="6" fill="none" stroke="white" strokeWidth="2.5" />
                 </svg>
-                
-                {/* Score et label au centre */}
+
                 <div style={{
                   position: 'absolute',
-                  bottom: 20,
+                  bottom: 8,
                   left: '50%',
                   transform: 'translateX(-50%)',
                   textAlign: 'center'
                 }}>
-                  <div style={{ fontSize: 36, fontWeight: 700, color: 'var(--text)', lineHeight: 1, marginBottom: 4 }}>
-                    {teamScore.toFixed(1).replace('.', ',')}
-                  </div>
-                  <div style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 2 }}>/10</div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text)' }}>
-                    {moodLabel.split(' - ')[0] || 'Serein'}
+                  <div style={{ fontSize: 42, fontWeight: 700, color: '#1A1F36', lineHeight: 1 }}>
+                    {clampedTeamScore.toFixed(1).replace('.', ',')}
+                    <span style={{ fontSize: 26, fontWeight: 400, color: 'var(--muted)' }}>/10</span>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Stats des humeurs - Distribution basée sur les données API */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              {Object.entries(distribution).length > 0 ? (
-                Object.entries(distribution).map(([cause, percentage]) => (
-                  <div key={cause} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: 14, color: 'var(--muted)' }}>{CAUSE_LABELS[cause] || cause}</span>
-                    <span style={{ fontSize: 14, color: 'var(--text)', fontWeight: 500 }}>{percentage}%</span>
-                  </div>
-                ))
-              ) : (
-                <div style={{ fontSize: 14, color: 'var(--muted)', textAlign: 'center', padding: '20px 0' }}>
-                  Aucune donnée disponible
-                </div>
-              )}
-            </div>
-
-            {/* Info text */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 8,
-              marginTop: 20,
-              padding: 16,
-              background: 'var(--bg)',
-              borderRadius: 8
-            }}>
-              <div style={{
-                width: 20,
-                height: 20,
-                borderRadius: '50%',
-                border: '2px solid #757575',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontSize: 12,
-                color: 'var(--muted)',
-                flexShrink: 0
-              }}>
-                i
-              </div>
-              <p style={{ fontSize: 13, color: 'var(--muted)', margin: 0, lineHeight: 1.5 }}>
-                Le score bien-être de l'entreprise est actuellement de 6,8.
-              </p>
-            </div>
+            <p style={{ fontSize: 14, color: 'var(--muted)', margin: 0, textAlign: 'center' }}>
+              Indice annuel evolutif
+            </p>
           </div>
         </div>
 
@@ -550,45 +520,9 @@ export default function Nous() {
               ))}
             </div>
 
-            {/* Légende */}
-            <div style={{ display: 'flex', gap: 24, marginBottom: 16 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 40, height: 3, background: '#0748EA', borderRadius: 2 }} />
-                <span style={{ fontSize: 13, color: '#0748EA' }}>Mon équipe</span>
-              </div>
-            </div>
-
-            {/* Graphique */}
-            <div style={{ position: 'relative', height: 250, background: 'var(--bg)', borderRadius: 12, padding: 20 }}>
-              <svg width="100%" height="210" viewBox="0 0 600 210">
-                {/* Grille */}
-                {[0, 1, 2, 3, 4].map(i => (
-                  <line key={i} x1="0" y1={i * 50} x2="600" y2={i * 50} stroke="#D9D9D9" strokeWidth="0.5" />
-                ))}
-                
-                {/* Courbe bleue (Mon équipe) - Dynamique */}
-                {teamPath && (
-                  <>
-                    <path d={teamPath} fill="none" stroke="#0748EA" strokeWidth="3" />
-                    {teamPoints.map((point, i) => (
-                      <circle key={i} cx={point.x} cy={point.y} r="5" fill="white" stroke="#0748EA" strokeWidth="2" />
-                    ))}
-                  </>
-                )}
-
-                <defs>
-                  <linearGradient id="gradientTeam" x1="0%" y1="100%" x2="0%" y2="0%">
-                    <stop offset="0%" stopColor="white" stopOpacity="0.3"/>
-                    <stop offset="100%" stopColor="#0748EA" stopOpacity="0.8"/>
-                  </linearGradient>
-                </defs>
-              </svg>
-              {/* Labels des jours */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: 'var(--muted)', marginTop: 8, paddingLeft: 20, paddingRight: 20 }}>
-                {getChartLabels().map((label, i) => (
-                  <div key={i} style={{ opacity: label ? 1 : 0, minWidth: selectedPeriod === 'Mois' ? '10px' : 'auto' }}>{label || ' '}</div>
-                ))}
-              </div>
+            {/* Graphique identique a la page Moi */}
+            <div style={{ marginBottom: 24 }}>
+              <WeeklyChart data={teamChartData} period={selectedPeriod} />
             </div>
 
             {/* Stats : Jours */}
