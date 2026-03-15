@@ -11,7 +11,7 @@ import WeeklyChart from '@/components/WeeklyChart'
 import MascotteIdle from '@/media/mascotte/idle.png'
 import MoodRevealCard from '@/components/MoodRevealCard'
 import { checkTodayStatus, getCheckinHistory } from '../../services/checkinService'
-import { getTeamStats } from '../../services/teamService'
+import { getWeeklySummary } from '../../services/teamService'
 
 export default function HomeEmployee() {
   const navigate = useNavigate()
@@ -101,10 +101,10 @@ export default function HomeEmployee() {
         setLastCheckin(null)
       }
 
-      // Charger les stats de l'équipe
-      const stats = await getTeamStats()
-      console.log('Stats de l\'équipe:', stats)
-      setTeamStats(stats)
+      // Charger le résumé hebdomadaire de l'équipe
+      const summary = await getWeeklySummary(null, 'week')
+      console.log('Résumé hebdomadaire équipe:', summary)
+      setTeamStats(summary)
     } catch (error) {
       console.error('❌ ERREUR lors du chargement des données:', error)
       console.error('❌ Détails de l\'erreur:', error.message, error.stack)
@@ -189,74 +189,49 @@ export default function HomeEmployee() {
 
   // Calculer les données pour TeamScoreCard à partir des stats de l'équipe
   const getTeamScoreData = () => {
-    if (!teamStats) {
-      return {
-        score: 0,
-        weatherValue: 0,
-        categories: [
-          { label: 'Épanoui', value: 0 },
-          { label: 'Serein', value: 0 },
-          { label: 'Mitigé', value: 0 }
-        ]
-      }
+    const empty = {
+      score: 0,
+      weatherValue: 0,
+      categories: []
     }
 
-    // Utiliser globalScore (0-100) et distribution depuis l'API
-    const globalScore = teamStats.globalScore || 0
-    const score = (globalScore / 10).toFixed(1) // Convertir 0-100 en 0-10
-    const distribution = teamStats.distribution || {}
+    if (!teamStats) return empty
 
-    // Calculer les catégories basées sur la distribution
-    // La distribution contient les dimensions (RELATIONS, CLARITY, etc.)
-    // On va les convertir en Épanoui/Serein/Mitigé selon leur valeur
-    
-    const totalCheckins = teamStats.totalCheckins || 0
-    
-    if (totalCheckins === 0 || globalScore === 0) {
-      return {
-        score: 0,
-        weatherValue: 0,
-        categories: [
-          { label: 'Épanoui', value: 0 },
-          { label: 'Serein', value: 0 },
-          { label: 'Mitigé', value: 0 }
-        ]
-      }
-    }
+    const now = new Date()
+    const localToday = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+    const utcToday = now.toISOString().split('T')[0]
+    const daily = Array.isArray(teamStats.daily) ? teamStats.daily : []
+    const todayEntry = daily.find((item) => {
+      if (typeof item.date !== 'string') return false
+      return item.date.startsWith(localToday) || item.date.startsWith(utcToday)
+    })
 
-    // Estimer les proportions basées sur le globalScore
-    let epanouiPercent, sereinPercent, mitigePercent
-    
-    if (globalScore > 80) {
-      // Score élevé : majorité épanoui
-      epanouiPercent = 70
-      sereinPercent = 25
-      mitigePercent = 5
-    } else if (globalScore > 60) {
-      // Score moyen : majorité serein
-      epanouiPercent = 30
-      sereinPercent = 55
-      mitigePercent = 15
-    } else if (globalScore > 40) {
-      // Score faible : équilibré
-      epanouiPercent = 20
-      sereinPercent = 40
-      mitigePercent = 40
-    } else {
-      // Score très faible : majorité mitigé
-      epanouiPercent = 10
-      sereinPercent = 30
-      mitigePercent = 60
-    }
+    // Fallback: dernière valeur dispo de la période (utile le week-end / jour sans donnée)
+    const latestEntry = [...daily]
+      .filter((item) => item && item.moodValue !== null && item.moodValue !== undefined)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))[0]
+    const selectedEntry = todayEntry || latestEntry
+
+    // weekly-summary fournit moodValue sur 0-100 ; TeamScoreCard attend 0-10 pour score
+    const weatherValue = Number(selectedEntry?.moodValue) || 0
+    const score = weatherValue > 0 ? Number((weatherValue / 10).toFixed(1)) : 0
+    if (score === 0) return empty
+
+    // Mapper les stats hebdomadaires en catégories lisibles
+    const stats = teamStats.stats || {}
+    const totalRatedDays = (stats.excellentDays || 0) + (stats.correctDays || 0) + (stats.difficultDays || 0)
+    const toPercent = (value) => (totalRatedDays > 0 ? Math.round((value / totalRatedDays) * 100) : 0)
+
+    const categories = [
+      { label: 'Épanoui', value: toPercent(stats.excellentDays || 0) },
+      { label: 'Serein', value: toPercent(stats.correctDays || 0) },
+      { label: 'Mitigé', value: toPercent(stats.difficultDays || 0) },
+    ]
 
     return {
-      score: parseFloat(score),
-      weatherValue: globalScore,
-      categories: [
-        { label: 'Épanoui', value: epanouiPercent },
-        { label: 'Serein', value: sereinPercent },
-        { label: 'Mitigé', value: mitigePercent }
-      ]
+      score,
+      weatherValue,
+      categories
     }
   }
 
