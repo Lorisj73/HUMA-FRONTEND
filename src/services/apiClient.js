@@ -55,6 +55,20 @@ async function request(path, { method = 'GET', headers = {}, body, requiresAuth 
     const error = new Error(`HTTP ${res.status}`)
     error.status = res.status
     error.payload = errPayload
+
+    // Redirect to login on expired/invalid token
+    if (
+      res.status === 401 &&
+      typeof errPayload === 'object' &&
+      (errPayload.code === 'UNAUTHORIZED' &&
+        typeof errPayload.message === 'string' &&
+        errPayload.message.toLowerCase().includes('token expired'))
+    ) {
+      clearAuthToken()
+      window.location.href = '/login'
+      return
+    }
+
     throw error
   }
 
