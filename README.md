@@ -29,7 +29,7 @@ HUMA permet aux employés de faire des check-ins d'humeur réguliers, de consult
 | Styles | Vanilla CSS + CSS variables (pas de framework CSS) |
 | Tests | Vitest + happy-dom |
 | Export | html2canvas + jspdf |
-| Déploiement | GitHub Pages |
+| Déploiement | Vercel |
 
 ---
 
